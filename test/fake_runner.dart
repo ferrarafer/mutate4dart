@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:mutate4dart/mutate4dart.dart';
 
 /// A [ProcessRunner] that records calls and answers from [respond], which
@@ -37,3 +39,17 @@ CommandResult result(int exitCode, {String output = '', int seconds = 1}) =>
       output: output,
       elapsed: Duration(seconds: seconds),
     );
+
+/// A [FakeRunner] that writes a minimal LCOV file wherever
+/// `--coverage-path` points, and passes every other run.
+FakeRunner writesCoverage(
+        {String lcov = 'SF:lib/a.dart\nDA:1,1\nend_of_record\n'}) =>
+    FakeRunner((args, __) {
+      final at = args.indexOf('--coverage-path');
+      if (at >= 0) {
+        File(args[at + 1])
+          ..parent.createSync(recursive: true)
+          ..writeAsStringSync(lcov);
+      }
+      return result(0);
+    });

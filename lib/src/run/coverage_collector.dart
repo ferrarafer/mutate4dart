@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 import 'mutation_runner.dart';
@@ -46,6 +48,10 @@ class CoverageCollector {
     );
     if (result.timedOut || result.exitCode != 0) {
       throw RedBaselineException(tests, result.output);
+    }
+    if (!File(lcov).existsSync()) {
+      throw RedBaselineException(
+          tests, 'No coverage was written to $lcov.\n${result.output}');
     }
     return lcov;
   }

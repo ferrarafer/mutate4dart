@@ -41,10 +41,12 @@ not swap an `&&`/`||` expression that contains a promoting test.
   selected (section 5) for all target files shall first run once with
   `--coverage --coverage-path .mutate4dart/lcov.info`, and that file is
   used instead of `--lcov`. Only test commands running `flutter test` are
-  supported (usage error otherwise). Failing tests shall be a usage error
-  (exit 1). Without selected tests nothing runs.
-- **Diff**: with `--diff` (base `HEAD`) or `--diff-base <ref>`, a mutant is
-  kept only when its line is added or changed in `git diff <ref>`.
+  supported (usage error otherwise). Failing tests, or a run that writes
+  no coverage file, shall be a usage error (exit 1). Without selected
+  tests nothing runs.
+- **Diff**: with `--diff` (base `HEAD`) or `--diff-base <ref>`, only files
+  changed in `git diff <ref>` are targeted (before coverage is collected),
+  and a mutant is kept only when its line is added or changed.
 
 ## 5. Test selection
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1
+
+- `--diff` / `--diff-base` now narrow the target files to changed ones
+  before anything else, so `--collect-coverage` only runs the tests of
+  changed files, not the tests of every file under `lib/`.
+- `--collect-coverage` reports an error when the test run writes no
+  coverage file, instead of crashing.
+
 ## 0.4.0
 
 - `--collect-coverage` (Flutter): runs only the test files that import the

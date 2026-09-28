@@ -21,7 +21,7 @@ void main() {
       );
 
   test('runs only the given tests with coverage into .mutate4dart', () async {
-    final fake = FakeRunner((_, __) => result(0));
+    final fake = writesCoverage();
     final lcov = await collector(fake).collect(['test/a_test.dart']);
     expect(lcov, p.join(root.path, collectedLcovPath));
     expect(
@@ -34,6 +34,14 @@ void main() {
     final fake = FakeRunner((_, __) => result(0));
     expect(await collector(fake).collect(const []), isNull);
     expect(fake.calls, isEmpty);
+  });
+
+  test('a run that writes no coverage is an error', () async {
+    final fake = FakeRunner((_, __) => result(0));
+    await expectLater(
+        collector(fake).collect(['test/a_test.dart']),
+        throwsA(isA<RedBaselineException>()
+            .having((e) => e.output, 'output', contains('No coverage'))));
   });
 
   test('failing tests are a red baseline', () async {

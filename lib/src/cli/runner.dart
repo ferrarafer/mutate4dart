@@ -18,7 +18,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.4.0';
+const String mutate4dartVersion = '0.4.1';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -130,8 +130,14 @@ class Mutate4DartRunner {
     for (final file in runner.recoverBackups()) {
       stderr.writeln('Restored $file from an interrupted run.');
     }
-    final files = MutationPlan.dartFiles(
-        root, options.rest.isEmpty ? const ['lib'] : options.rest);
+    final diff = await _diff(options, root);
+    // In diff mode only changed files matter: this also keeps
+    // --collect-coverage from running the tests of untouched files.
+    final files = [
+      for (final f in MutationPlan.dartFiles(
+          root, options.rest.isEmpty ? const ['lib'] : options.rest))
+        if (diff == null || diff.hasRealChanges(f)) f,
+    ];
     final selector = TestSelector.build(root);
     final reach = TestReach.values.byName(options['reach'] as String);
     final lcov = options['collect-coverage'] as bool
@@ -145,7 +151,7 @@ class Mutate4DartRunner {
       finder: MutantFinder(operators: _operators(options)),
       filter: MutantFilter(
         coverage: lcov == null ? null : CoverageMap.load(lcov, root),
-        diff: await _diff(options, root),
+        diff: diff,
       ),
       selector: selector,
       reach: reach,

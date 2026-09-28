@@ -18,7 +18,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.4.1';
+const String mutate4dartVersion = '0.4.2';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -131,13 +131,7 @@ class Mutate4DartRunner {
       stderr.writeln('Restored $file from an interrupted run.');
     }
     final diff = await _diff(options, root);
-    // In diff mode only changed files matter: this also keeps
-    // --collect-coverage from running the tests of untouched files.
-    final files = [
-      for (final f in MutationPlan.dartFiles(
-          root, options.rest.isEmpty ? const ['lib'] : options.rest))
-        if (diff == null || diff.hasRealChanges(f)) f,
-    ];
+    final files = _targetFiles(options, root, diff);
     final selector = TestSelector.build(root);
     final reach = TestReach.values.byName(options['reach'] as String);
     final lcov = options['collect-coverage'] as bool
@@ -185,6 +179,20 @@ class Mutate4DartRunner {
         ? _runPlan(plan, runner)
         : _runParallel(plan, runner.command, runner.projectRoot, jobs);
   }
+
+  /// The files to mutate: `paths` (default `lib`), narrowed to changed
+  /// files in diff mode. Also keeps --collect-coverage from running the
+  /// tests of untouched files.
+  static List<String> _targetFiles(
+    ArgResults options,
+    String root,
+    DiffLineMap? diff,
+  ) =>
+      [
+        for (final f in MutationPlan.dartFiles(
+            root, options.rest.isEmpty ? const ['lib'] : options.rest))
+          if (diff == null || diff.hasRealChanges(f)) f,
+      ];
 
   static String _render(String format, MutationReport report, String root) =>
       switch (format) {

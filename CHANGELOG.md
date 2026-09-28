@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+- Internal: `Mutate4DartRunner._mutate` back under the project's own
+  CRAP limit (8.0). 0.4.1 was released at 9.0.
+
 ## 0.4.1
 
 - `--diff` / `--diff-base` now narrow the target files to changed ones

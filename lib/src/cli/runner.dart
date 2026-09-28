@@ -1,0 +1,259 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:args/args.dart';
+import 'package:crap4dart/crap4dart.dart';
+import 'package:path/path.dart' as p;
+
+import '../mutation/mutant.dart';
+import '../mutation/mutant_finder.dart';
+import '../report/mutation_report.dart';
+import '../run/mutation_runner.dart';
+import '../run/test_command.dart';
+import '../selection/mutant_filters.dart';
+import '../selection/test_selector.dart';
+import 'mutation_plan.dart';
+
+/// Current mutate4dart version.
+const String mutate4dartVersion = '0.1.0';
+
+/// Process exit codes.
+abstract final class ExitCodes {
+  /// Success, or the score met `--threshold`.
+  static const int success = 0;
+
+  /// Usage or configuration error, or red tests on unmutated code.
+  static const int usageError = 1;
+
+  /// The mutation score is below `--threshold`.
+  static const int thresholdMissed = 2;
+}
+
+/// The mutate4dart command line.
+class Mutate4DartRunner {
+  /// Creates a runner for [projectRoot] (default: the current directory).
+  /// [run] spawns test commands (injectable for tests).
+  Mutate4DartRunner({this.projectRoot, this.run = runProcess});
+
+  /// Project root override.
+  final String? projectRoot;
+
+  /// Process runner used for test commands.
+  final ProcessRunner run;
+
+  static final ArgParser _parser = ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.')
+    ..addFlag('version', negatable: false, help: 'Print the version.')
+    ..addOption('lcov',
+        defaultsTo: 'coverage/lcov.info',
+        help: 'LCOV file: only covered lines are mutated.')
+    ..addFlag('coverage',
+        defaultsTo: true, help: 'Skip mutants on lines no test executes.')
+    ..addFlag('diff',
+        negatable: false, help: 'Only mutate lines changed since HEAD.')
+    ..addOption('diff-base',
+        help: 'Only mutate lines changed since this git ref.')
+    ..addOption('test-command',
+        help: 'Test command; test files are appended '
+            '(default: flutter test --no-pub, or dart test).')
+    ..addOption('reach',
+        allowed: ['direct', 'transitive'],
+        defaultsTo: 'direct',
+        help: 'Run tests that import the file directly, or through any '
+            'chain of imports.')
+    ..addOption('operators',
+        help: 'Comma-separated operator ids (default: all).')
+    ..addOption('max-mutants',
+        help: 'Run only the N mutants in the riskiest (highest CRAP) '
+            'methods.')
+    ..addOption('threshold',
+        defaultsTo: '0',
+        help: 'Minimum mutation score (0-100); below it exits 2.')
+    ..addOption('format',
+        allowed: ['console', 'json'],
+        defaultsTo: 'console',
+        help: 'Report format (json writes only JSON to stdout).')
+    ..addFlag('dry-run',
+        negatable: false,
+        help: 'List the planned mutants and their tests without running.');
+
+  /// Runs mutate4dart with [args]; returns the exit code.
+  Future<int> execute(List<String> args) async {
+    final ArgResults options;
+    try {
+      options = _parser.parse(args);
+    } on FormatException catch (e) {
+      return _usageError(e.message);
+    }
+    if (options['help'] as bool) {
+      stdout.writeln('Usage: mutate4dart [paths...] [options]\n\n'
+          '${_parser.usage}');
+      return ExitCodes.success;
+    }
+    if (options['version'] as bool) {
+      stdout.writeln('mutate4dart $mutate4dartVersion');
+      return ExitCodes.success;
+    }
+    try {
+      return await _mutate(options);
+    } on _UsageError catch (e) {
+      return _usageError(e.message);
+    }
+  }
+
+  Future<int> _mutate(ArgResults options) async {
+    final root = projectRoot ?? Directory.current.path;
+    final runner = MutationRunner(
+      projectRoot: root,
+      command: _testCommand(options, root),
+      run: run,
+    );
+    for (final file in runner.recoverBackups()) {
+      stderr.writeln('Restored $file from an interrupted run.');
+    }
+    final lcov = _lcovPath(options, root);
+    final plan = MutationPlan.build(
+      projectRoot: root,
+      files: MutationPlan.dartFiles(
+          root, options.rest.isEmpty ? const ['lib'] : options.rest),
+      finder: MutantFinder(operators: _operators(options)),
+      filter: MutantFilter(
+        coverage: lcov == null ? null : CoverageMap.load(lcov, root),
+        diff: await _diff(options, root),
+      ),
+      selector: TestSelector.build(root),
+      reach: TestReach.values.byName(options['reach'] as String),
+      lcovPath: lcov,
+      maxMutants: _intOption(options, 'max-mutants'),
+    );
+    _printPlan(plan);
+    if (options['dry-run'] as bool) {
+      _printDryRun(plan);
+      return ExitCodes.success;
+    }
+    final results = await _runPlan(plan, runner);
+    if (results == null) return ExitCodes.usageError;
+    final report =
+        MutationReport.build(results, projectRoot: root, lcovPath: lcov);
+    final renderer = ReportRenderer(root);
+    stdout.write(options['format'] == 'json'
+        ? '${renderer.json(report)}\n'
+        : renderer.console(report));
+    final threshold = double.tryParse(options['threshold'] as String) ?? 0;
+    return (report.score ?? 100) < threshold
+        ? ExitCodes.thresholdMissed
+        : ExitCodes.success;
+  }
+
+  Future<List<MutantResult>?> _runPlan(
+    MutationPlan plan,
+    MutationRunner runner,
+  ) async {
+    final interrupt = ProcessSignal.sigint.watch().listen((_) {
+      runner.recoverBackups();
+      stderr.writeln('\nInterrupted: sources restored.');
+      exit(130);
+    });
+    try {
+      for (final tests in {for (final m in plan.mutants) m.tests.join('\n')}) {
+        await runner.verifyBaseline(tests.split('\n'));
+      }
+      final results = <MutantResult>[];
+      for (final (i, planned) in plan.mutants.indexed) {
+        final result = await runner.runMutant(planned.mutant, planned.tests);
+        stderr.writeln('[${i + 1}/${plan.mutants.length}] '
+            '${planned.mutant.file}:${planned.mutant.line} '
+            '${planned.mutant.operator}: ${result.status.name}');
+        results.add(result);
+      }
+      return results;
+    } on RedBaselineException catch (e) {
+      stderr
+        ..writeln('Error: $e')
+        ..writeln('Fix the failing tests first: every mutant would look '
+            'killed.')
+        ..writeln(e.output);
+      return null;
+    } finally {
+      await interrupt.cancel();
+    }
+  }
+
+  TestCommand _testCommand(ArgResults options, String root) {
+    final custom = options['test-command'] as String?;
+    return custom == null
+        ? TestCommand.detect(root)
+        : TestCommand.parse(custom);
+  }
+
+  String? _lcovPath(ArgResults options, String root) {
+    if (!(options['coverage'] as bool)) return null;
+    final path = p.join(root, options['lcov'] as String);
+    if (File(path).existsSync()) return path;
+    throw _UsageError('No coverage file at ${options['lcov']}. Run the '
+        'tests with coverage first (flutter test --coverage / dart test '
+        '--coverage), pass --lcov, or use --no-coverage.');
+  }
+
+  Future<DiffLineMap?> _diff(ArgResults options, String root) async {
+    final base = options['diff-base'] as String? ??
+        ((options['diff'] as bool) ? 'HEAD' : null);
+    if (base == null) return null;
+    try {
+      return await const GitDiffParser().diff(root, base: base);
+    } on ProcessException catch (e) {
+      throw _UsageError('git diff failed: ${e.message}');
+    }
+  }
+
+  Set<MutationOperator>? _operators(ArgResults options) {
+    final ids = options['operators'] as String?;
+    if (ids == null) return null;
+    final byId = {for (final o in MutationOperator.values) o.id: o};
+    return {
+      for (final id in ids.split(',').map((s) => s.trim()))
+        byId[id] ??
+            (throw _UsageError('Unknown operator "$id". Known: '
+                '${byId.keys.join(', ')}')),
+    };
+  }
+
+  int? _intOption(ArgResults options, String name) {
+    final raw = options[name] as String?;
+    if (raw == null) return null;
+    final value = int.tryParse(raw);
+    if (value == null || value < 1) {
+      throw _UsageError('--$name must be a positive integer, got "$raw".');
+    }
+    return value;
+  }
+
+  void _printPlan(MutationPlan plan) {
+    stderr.writeln('${plan.found} mutants found, ${plan.mutants.length} '
+        'to run (${plan.withoutTests} without tests importing their file).');
+    for (final file in plan.unparsed) {
+      stderr.writeln('Skipped $file: it does not parse.');
+    }
+  }
+
+  void _printDryRun(MutationPlan plan) {
+    for (final m in plan.mutants) {
+      stdout.writeln('${m.mutant.file}:${m.mutant.line} '
+          '[${m.mutant.operator}] -> ${m.mutant.replacement}  '
+          '(${m.tests.length} test file(s))');
+    }
+  }
+
+  int _usageError(String message) {
+    stderr
+      ..writeln('Error: $message')
+      ..writeln('Usage: mutate4dart [paths...] [options] (see --help)');
+    return ExitCodes.usageError;
+  }
+}
+
+class _UsageError implements Exception {
+  const _UsageError(this.message);
+
+  final String message;
+}

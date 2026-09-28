@@ -1,0 +1,5 @@
+.dart_tool/
+build/
+coverage/
+.mutate4dart/
+mutation-report/

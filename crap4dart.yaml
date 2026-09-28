@@ -1,0 +1,35 @@
+# crap4dart configuration (dogfooding the sibling tool).
+sources: [lib, bin, test]
+
+crap:
+  threshold: 8.0
+
+coverage:
+  lcov_path: coverage/lcov.info
+  run_tests: false
+  required: false
+
+gates:
+  loc:
+    max_lines: 800
+  test_coverage:
+    min_percent: 70.0
+  complexity:
+    max_complexity: 12
+  method_size:
+    max_lines: 80
+    max_params: 8
+  public_docs:
+    exclude:
+      - 'test/**'
+  test_assertions:
+    exclude:
+      - 'test/**'
+  folder_structure:
+    dirs: [lib/src]
+  golden:
+    enabled: false
+  hardcoded_strings:
+    enabled: false
+  accessibility:
+    enabled: false

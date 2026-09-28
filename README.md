@@ -11,13 +11,17 @@ and runs the tests after each one. A mutant that no test catches
 (*survived*) points at logic that is executed but not really tested.
 
 ```
- SCORE  DET  SURV  INV   CRAP  CC  METHOD                                    FILE:LINE
- 60.0%    6     4    0   26.0  26  WagerService._calculateWolfTotals         lib/services/wager_service.dart:781
+$ mutate4dart lib/services/wager_service.dart     # a Flutter app, 184 mutants, 11.5 min
+ SCORE  DET  SURV  INV   CRAP  CC  METHOD                                   FILE:LINE
+ 47.1%    8     9    1   11.1  11  WagerService._sumStrokesForPlayer        lib/services/wager_service.dart:899
+ 53.1%   17    15    6   26.0  26  WagerService._calculateWolfTotals        lib/services/wager_service.dart:781
  ...
 Survivors (the tests miss these changes):
-  lib/services/wager_service.dart:828 [logical]
-    - if (winningIndex == -1 && !settings.carryOverWhenTied) continue;
-    + if (winningIndex == -1 || !settings.carryOverWhenTied) continue;
+  lib/services/wager_service.dart:928 [arithmetic]
+    - total += (entry.score - allocation);
+    + total += (entry.score + allocation);
+  ...
+Mutation score: 69.9% (184 mutants)
 ```
 
 ## How it works

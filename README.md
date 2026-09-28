@@ -135,3 +135,7 @@ Score = detected / (detected + survived).
   `/` on `int`s yields a `double`). They are reported as `invalid` and
   excluded from the score.
 - No config file or baseline yet: options are CLI flags only.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

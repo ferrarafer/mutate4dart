@@ -9,13 +9,14 @@ import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
 import '../report/mutation_report.dart';
 import '../run/mutation_runner.dart';
+import '../run/parallel_runner.dart';
 import '../run/test_command.dart';
 import '../selection/mutant_filters.dart';
 import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.1.0';
+const String mutate4dartVersion = '0.2.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -28,6 +29,12 @@ abstract final class ExitCodes {
   /// The mutation score is below `--threshold`.
   static const int thresholdMissed = 2;
 }
+
+/// Default parallelism: half the cores, at most 4. Measured on a Flutter
+/// app (11 cores): 4 workers were fastest; more contend for CPU and
+/// memory, since every `flutter test` compiles on its own.
+int defaultJobs([int? cores]) =>
+    ((cores ?? Platform.numberOfProcessors) ~/ 2).clamp(1, 4);
 
 /// The mutate4dart command line.
 class Mutate4DartRunner {
@@ -73,6 +80,10 @@ class Mutate4DartRunner {
         allowed: ['console', 'json'],
         defaultsTo: 'console',
         help: 'Report format (json writes only JSON to stdout).')
+    ..addOption('jobs',
+        abbr: 'j',
+        help: 'Mutants run at once, each in an isolated shadow copy of '
+            'the project; 1 mutates in place (default: min(4, cores/2)).')
     ..addFlag('dry-run',
         negatable: false,
         help: 'List the planned mutants and their tests without running.');
@@ -131,7 +142,7 @@ class Mutate4DartRunner {
       _printDryRun(plan);
       return ExitCodes.success;
     }
-    final results = await _runPlan(plan, runner);
+    final results = await _runMutants(options, plan, runner);
     if (results == null) return ExitCodes.usageError;
     final report =
         MutationReport.build(results, projectRoot: root, lcovPath: lcov);
@@ -143,6 +154,18 @@ class Mutate4DartRunner {
     return (report.score ?? 100) < threshold
         ? ExitCodes.thresholdMissed
         : ExitCodes.success;
+  }
+
+  /// Runs the plan in place (`--jobs 1`) or on parallel shadows.
+  Future<List<MutantResult>?> _runMutants(
+    ArgResults options,
+    MutationPlan plan,
+    MutationRunner runner,
+  ) {
+    final jobs = _intOption(options, 'jobs') ?? defaultJobs();
+    return jobs == 1
+        ? _runPlan(plan, runner)
+        : _runParallel(plan, runner.command, runner.projectRoot, jobs);
   }
 
   Future<List<MutantResult>?> _runPlan(
@@ -161,23 +184,58 @@ class Mutate4DartRunner {
       final results = <MutantResult>[];
       for (final (i, planned) in plan.mutants.indexed) {
         final result = await runner.runMutant(planned.mutant, planned.tests);
-        stderr.writeln('[${i + 1}/${plan.mutants.length}] '
-            '${planned.mutant.file}:${planned.mutant.line} '
-            '${planned.mutant.operator}: ${result.status.name}');
+        _progress(i + 1, plan.mutants.length, result);
         results.add(result);
       }
       return results;
     } on RedBaselineException catch (e) {
-      stderr
-        ..writeln('Error: $e')
-        ..writeln('Fix the failing tests first: every mutant would look '
-            'killed.')
-        ..writeln(e.output);
+      _printRedBaseline(e);
       return null;
     } finally {
       await interrupt.cancel();
     }
   }
+
+  Future<List<MutantResult>?> _runParallel(
+    MutationPlan plan,
+    TestCommand command,
+    String root,
+    int jobs,
+  ) async {
+    final parallel = ParallelMutationRunner(
+      projectRoot: root,
+      command: command,
+      jobs: jobs,
+      run: run,
+    );
+    final interrupt = ProcessSignal.sigint.watch().listen((_) {
+      parallel.dispose();
+      stderr.writeln('\nInterrupted: shadow workspaces removed.');
+      exit(130);
+    });
+    var done = 0;
+    try {
+      return await parallel.runAll(
+        [for (final m in plan.mutants) (mutant: m.mutant, tests: m.tests)],
+        onResult: (r) => _progress(++done, plan.mutants.length, r),
+      );
+    } on RedBaselineException catch (e) {
+      _printRedBaseline(e);
+      return null;
+    } finally {
+      await interrupt.cancel();
+    }
+  }
+
+  void _progress(int done, int total, MutantResult r) =>
+      stderr.writeln('[$done/$total] ${r.mutant.file}:${r.mutant.line} '
+          '${r.mutant.operator}: ${r.status.name}');
+
+  void _printRedBaseline(RedBaselineException e) => stderr
+    ..writeln('Error: $e')
+    ..writeln('Fix the failing tests first: every mutant would look '
+        'killed.')
+    ..writeln(e.output);
 
   TestCommand _testCommand(ArgResults options, String root) {
     final custom = options['test-command'] as String?;

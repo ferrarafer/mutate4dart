@@ -40,9 +40,14 @@ Mutation score: 69.9% (184 mutants)
    large app.
 4. **Check the baseline.** The selected tests must pass on the unmutated
    code first. Otherwise every mutant would look killed.
-5. **Run** one mutant at a time. The file is backed up to
-   `.mutate4dart/backup/` and always restored, including on Ctrl-C and on
-   the next run after a crash.
+5. **Run** mutants in parallel (`--jobs`, default `min(4, cores/2)`). Each
+   worker gets a *shadow workspace*: a temporary mirror of the project, or
+   of its pub workspace root, made of symlinks, where only the mutated
+   files are real copies and build caches are private. The original
+   project is never modified. With `--jobs 1`, mutants run in place
+   instead, one at a time: the file is backed up to `.mutate4dart/backup/`
+   and always restored, including on Ctrl-C and on the next run after a
+   crash.
 6. **Report** per method, next to the method's CRAP score. The riskiest
    (highest-CRAP) methods are mutated first, so `--max-mutants` spends a
    limited budget where it matters most.
@@ -79,6 +84,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--max-mutants N` | | Only the N mutants in the riskiest methods |
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
 | `--format` | `console` | `json` writes only JSON to stdout |
+| `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |
 | `--dry-run` | | Plan only, nothing is run |
 
 Exit codes: `0` success, `1` usage/configuration error or tests failing on
@@ -99,6 +105,13 @@ unmutated code, `2` mutation score below `--threshold`.
 | `negate_condition` | `if` / `while` / `?:` condition `c` → `!(c)` (skipped when `equality` or `remove_not` already yield the same program) |
 | `null_coalescing` | `a ?? b` → `b` |
 
+Mutations that would break *type promotion* are skipped, because the
+result would not compile. Promotion is how Dart treats `x` as non-null
+(or as type `T`) after a check. The skipped cases are flipping `x == null`
+/ `x != null`, and negating a condition or swapping its `&&`/`||` when it
+contains a null check or an `is` test (`x == null || x.isEmpty`,
+`o is Foo && o.bar`).
+
 ## Results
 
 - **killed**: a selected test failed. The suite detects the change.
@@ -109,16 +122,16 @@ unmutated code, `2` mutation score below `--threshold`.
 
 Score = detected / (detected + survived).
 
-## Limitations (0.1)
+## Limitations (0.2)
 
-- Mutants run one at a time, taking about 3–4 s each on a Flutter test
-  file (Flutter reuses its build between runs). Parallel runs in isolated
-  copies are planned.
+- Each worker's first `flutter test` run compiles from a cold cache
+  (about 10 s on a Flutter app); later runs take about 3–4 s per mutant.
+  On an 11-core machine, 4 workers were fastest (2.5× over sequential).
+  More workers contend for CPU and memory.
 - Some surviving mutants are *equivalent*: they change the code without
   changing its behaviour, e.g. `i >= n` → `i == n` in a loop that counts
   up by one. Review survivors before writing tests.
+- Without type information, a few mutants still don't compile (e.g. `*` →
+  `/` on `int`s yields a `double`). They are reported as `invalid` and
+  excluded from the score.
 - No config file or baseline yet: options are CLI flags only.
-- Mutating a null check that Dart relies on to treat a variable as
-  non-null afterwards (`if (x == null || x.isEmpty)`) produces code that
-  doesn't compile. Such mutants are reported as `invalid` and excluded
-  from the score, but each still costs a test run.

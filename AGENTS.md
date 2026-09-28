@@ -35,7 +35,8 @@ lib/src/cli/runner.dart       # flags, orchestration, exit codes
 lib/src/cli/mutation_plan.dart# find -> filter -> select tests -> order by CRAP
 lib/src/mutation/             # Mutant model, operators, AST MutantFinder
 lib/src/selection/            # coverage/diff filters, import-graph TestSelector
-lib/src/run/                  # TestCommand, ProcessRunner, MutationRunner
+lib/src/run/                  # TestCommand, ProcessRunner, MutationRunner (in place),
+                              # ShadowWorkspace + ParallelMutationRunner (--jobs)
 lib/src/report/               # per-method MutationReport, console/JSON
 ```
 
@@ -51,7 +52,9 @@ Conventions:
   visitor case in `mutant_finder.dart`, tests, and README/spec entries.
   Avoid operators that duplicate another's program (see `_negate`).
 - Source files must always be restored: every mutation goes through
-  `MutationRunner.runMutant` (backup + `finally` restore).
+  `MutationRunner.runMutant` (backup + `finally` restore). In parallel
+  mode it runs inside a `ShadowWorkspace`, so the original project is
+  never written. Keep it that way.
 - Exit codes: `0` success, `1` usage/config error or red baseline, `2`
   score below `--threshold`. `--format json` keeps stdout JSON-only.
 

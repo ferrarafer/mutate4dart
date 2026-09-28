@@ -10,6 +10,8 @@ export 'src/mutation/mutant.dart';
 export 'src/mutation/mutant_finder.dart';
 export 'src/report/mutation_report.dart';
 export 'src/run/mutation_runner.dart';
+export 'src/run/parallel_runner.dart';
+export 'src/run/shadow_workspace.dart';
 export 'src/run/test_command.dart';
 export 'src/selection/mutant_filters.dart';
 export 'src/selection/test_selector.dart';

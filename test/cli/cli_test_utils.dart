@@ -41,12 +41,17 @@ Directory createCalcProject() => createProject({
           'end_of_record\nSF:lib/other.dart\nDA:1,1\nend_of_record\n',
     });
 
-/// A [FakeRunner] whose tests fail (kill the mutant) when
-/// `lib/calc.dart` contains [killedBy], and pass otherwise.
-FakeRunner killWhen(Directory root, String killedBy) => FakeRunner((_, __) {
-      final source = File('${root.path}/lib/calc.dart').readAsStringSync();
-      return result(source.contains(killedBy) ? 1 : 0);
-    });
+/// A [FakeRunner] whose tests fail (kill the mutant) when the
+/// `lib/calc.dart` of the run's working directory (the project or a
+/// shadow workspace) contains [killedBy], and pass otherwise.
+FakeRunner killWhen(String killedBy) {
+  late final FakeRunner fake;
+  fake = FakeRunner((_, __) {
+    final source = File('${fake.cwd}/lib/calc.dart').readAsStringSync();
+    return result(source.contains(killedBy) ? 1 : 0);
+  });
+  return fake;
+}
 
 class _BufferStdout implements Stdout {
   _BufferStdout(this._buffer);

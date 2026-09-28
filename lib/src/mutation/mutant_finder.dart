@@ -107,6 +107,8 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
   /// Negates [condition], unless another operator already produces the
   /// same program: `a == b` / `a != b` (equality swap) and `!x`
   /// (remove_not).
+  /// Also skipped when the condition promotes a variable (see
+  /// [_promotes]): the negated code would not compile.
   void _negate(Expression condition) {
     final bare = condition.unParenthesized;
     if (bare is PrefixExpression && bare.operator.lexeme == '!') return;
@@ -114,6 +116,7 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
         _binaryOperators[bare.operator.lexeme] == MutationOperator.equality) {
       return;
     }
+    if (_promotes(condition)) return;
     _add(
       MutationOperator.negateCondition,
       condition.offset,
@@ -142,12 +145,48 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
         _text(node.rightOperand),
       );
     } else if (_binarySwaps[lexeme] case final to?) {
-      if (lexeme != '+' || !_isStringConcatenation(node)) {
+      if (!_keepsOperator(node, lexeme)) {
         _swapToken(_binaryOperators[lexeme]!, node.operator, to);
       }
     }
     super.visitBinaryExpression(node);
   }
+
+  /// Swaps that would not compile or not mean anything: string `+`, and
+  /// swaps that break type promotion: `x == null` flipped, or `&&`/`||`
+  /// around a null or `is` check (`x == null || x.isEmpty`).
+  static bool _keepsOperator(BinaryExpression node, String lexeme) =>
+      switch (_binaryOperators[lexeme]) {
+        MutationOperator.arithmetic =>
+          lexeme == '+' && _isStringConcatenation(node),
+        MutationOperator.equality => _isNullCheck(node),
+        MutationOperator.logical => _promotes(node),
+        _ => false,
+      };
+
+  /// Whether [e] is, or chains with `&&`/`||`/`!`, a null check or an
+  /// `is` test: Dart promotes the tested variable after it, so changing
+  /// the logic around it makes later uses fail to compile.
+  static bool _promotes(Expression e) => switch (e.unParenthesized) {
+        IsExpression() => true,
+        final BinaryExpression b when _isNullCheck(b) => true,
+        BinaryExpression(
+          :final operator,
+          :final leftOperand,
+          :final rightOperand
+        )
+            when operator.lexeme == '&&' || operator.lexeme == '||' =>
+          _promotes(leftOperand) || _promotes(rightOperand),
+        PrefixExpression(:final operator, :final operand)
+            when operator.lexeme == '!' =>
+          _promotes(operand),
+        _ => false,
+      };
+
+  /// `x == null` or `x != null` (either side).
+  static bool _isNullCheck(BinaryExpression b) =>
+      (b.operator.lexeme == '==' || b.operator.lexeme == '!=') &&
+      (b.leftOperand is NullLiteral || b.rightOperand is NullLiteral);
 
   @override
   void visitAssignmentExpression(AssignmentExpression node) {

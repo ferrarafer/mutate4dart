@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0
+
+- Parallel runs: `--jobs N` (default `min(4, cores/2)`) runs mutants
+  concurrently, each worker in a *shadow workspace* (a symlink mirror of
+  the project or its pub workspace root, with real copies of the mutated
+  files and private build caches). The original project is never touched.
+  `--jobs 1` keeps the in-place mode. On a Flutter app, 4 workers were
+  2.5× faster than sequential.
+- Mutants that break type promotion are no longer generated: null
+  comparisons are not flipped, and conditions or `&&`/`||` chains
+  containing a null check or an `is` test are not negated or swapped. On
+  a Flutter service this removed 31 of 184 mutants, most of which did not
+  compile.
+
 ## 0.1.0
 
 First version.

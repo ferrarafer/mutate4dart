@@ -1,4 +1,4 @@
-# mutate4dart specification (0.1)
+# mutate4dart specification (0.2)
 
 ## 1. Scope
 
@@ -23,6 +23,13 @@ The following shall not be mutated: annotations, `assert` statements and
 initializers, `if (x case ...)` conditions, and `+` with a string-literal
 operand. `negate_condition` shall be skipped when the condition (ignoring
 parentheses) is an `==`/`!=` comparison or a `!` expression.
+
+Mutants that break type promotion shall not be generated. A *promoting
+test* is an `is` expression or an `==`/`!=` comparison with a `null`
+literal operand, possibly combined through `&&`, `||`, `!` and
+parentheses. `equality` shall not flip a null comparison. `logical` shall
+not swap an `&&`/`||` expression that contains a promoting test.
+`negate_condition` shall not negate a condition that contains one.
 
 ## 4. Filters
 
@@ -61,8 +68,29 @@ The test command is `flutter test --no-pub` when the pubspec's
 `dependencies` contain `flutter`, `dart test` otherwise, or the
 whitespace-split `--test-command`. Test files are appended as arguments.
 
-Before any mutant runs, each distinct set of test files shall run once on
-the unmutated code. A failure or timeout shall abort with exit code 1.
+`--jobs N` (default `min(4, cores ÷ 2)`, at least 1) sets the number of
+concurrent workers. With N = 1, mutants run in place in the project as
+described below. With N > 1, each worker runs in its own *shadow
+workspace*, and the original project shall not be modified:
+
+- The shadow mirrors the *resolution root*: the nearest directory at or
+  above the project root containing `.dart_tool/package_config.json`
+  (the project root if none).
+- Directories on the path to the project root and to each mutated file are
+  real directories. The mutated files are real copies. Every other entry
+  is a symlink to the original.
+- `.git` is omitted. `build`, `.mutate4dart` and `.dart_tool` of real
+  directories are not shared. Their `.dart_tool` holds only copies of
+  `package_config.json` and `package_graph.json`.
+- Workers take mutants from the shared plan order. Results are reported
+  in plan order.
+- Before its first mutant for a set of test files, a worker runs that set
+  unmutated. A failure aborts the run with exit code 1 after in-flight
+  mutants finish.
+- Shadows are deleted at the end, on failure and on SIGINT.
+
+In place, before any mutant runs, each distinct set of test files shall
+run once on the unmutated code. A failure or timeout shall abort with exit code 1.
 Its duration *d* sets the mutant timeout `max(30 s, 3·d)`.
 
 Each mutant shall be applied to its file. The original shall first be

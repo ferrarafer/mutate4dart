@@ -13,7 +13,7 @@ void main() {
   tearDown(() => root.deleteSync(recursive: true));
 
   test('--version and --help', () async {
-    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.1.0\n');
+    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.2.0\n');
     final help = await runCli(root, ['--help']);
     expect(help.exitCode, ExitCodes.success);
     expect(help.stdout, contains('--test-command'));
@@ -30,7 +30,7 @@ void main() {
   });
 
   test('runs mutants and reports survivors per method', () async {
-    final fake = killWhen(root, 'a - b');
+    final fake = killWhen('a - b');
     final run = await runCli(root, ['lib/calc.dart'], fake: fake);
     expect(run.exitCode, ExitCodes.success);
     expect(fake.calls.first.command, 'dart test test/calc_test.dart');
@@ -45,7 +45,7 @@ void main() {
 
   test('json output and --threshold', () async {
     final run = await runCli(root, ['--format', 'json', '--threshold', '50'],
-        fake: killWhen(root, 'a - b'));
+        fake: killWhen('a - b'));
     expect(run.exitCode, ExitCodes.thresholdMissed);
     final json = jsonDecode(run.stdout) as Map<String, dynamic>;
     final method = (json['methods'] as List).single as Map<String, dynamic>;
@@ -63,5 +63,12 @@ void main() {
       '1'
     ]);
     expect(run.stdout.trim().split('\n'), hasLength(1));
+  });
+
+  test('--jobs 1 mutates in place and restores the file', () async {
+    final fake = killWhen('a - b');
+    final run = await runCli(root, ['--jobs', '1'], fake: fake);
+    expect(run.stdout, contains('Mutation score: 33.3% (3 mutants)'));
+    expect(fake.cwd, root.path);
   });
 }

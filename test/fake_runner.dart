@@ -12,6 +12,10 @@ class FakeRunner {
   /// Every call as `executable args...`, with its timeout.
   final List<({String command, Duration timeout})> calls = [];
 
+  /// Working directory of the current call (a shadow workspace in
+  /// parallel runs).
+  String? cwd;
+
   /// The runner to inject.
   Future<CommandResult> call(
     String executable,
@@ -19,6 +23,7 @@ class FakeRunner {
     required String workingDirectory,
     required Duration timeout,
   }) async {
+    cwd = workingDirectory;
     calls
         .add((command: [executable, ...arguments].join(' '), timeout: timeout));
     return respond(arguments, calls.length - 1);

@@ -83,7 +83,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--operators` | all | Comma-separated operator ids (see below) |
 | `--max-mutants N` | | Only the N mutants in the riskiest methods |
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
-| `--format` | `console` | `json` writes only JSON to stdout |
+| `--format` | `console` | `json` or `markdown` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment) |
 | `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |
 | `--dry-run` | | Plan only, nothing is run |
 

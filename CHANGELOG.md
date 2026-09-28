@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- `--format markdown`: a report for CI job summaries
+  (`$GITHUB_STEP_SUMMARY`) and PR comments. It has the score line, a
+  table of methods with survivors (with CRAP and CC), and each survivor
+  as a collapsible `diff` of the original and mutated line.
+
 ## 0.2.0
 
 - Parallel runs: `--jobs N` (default `min(4, cores/2)`) runs mutants

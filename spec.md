@@ -113,6 +113,12 @@ Score = detected / (detected + survived), N/A when that is zero.
 - JSON (`--format json`): `{score, methods: [{file, method, line,
   complexity, crap, score, mutants: [{line, operator, replacement, status,
   tests}]}]}`; stdout carries only JSON.
+- Markdown (`--format markdown`): a `## Mutation testing (mutate4dart)`
+  heading, then a summary line with the score and the detected, survived
+  and invalid counts. Then a table of the methods with survivors (lowest
+  score first), the number of other methods, and the survivors as `diff`
+  blocks inside a `<details>` element. Without mutants it states there was
+  nothing to mutate. Stdout carries only Markdown.
 
 ## 9. Exit codes
 

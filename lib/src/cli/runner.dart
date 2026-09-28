@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
+import '../report/markdown_renderer.dart';
 import '../report/mutation_report.dart';
 import '../run/mutation_runner.dart';
 import '../run/parallel_runner.dart';
@@ -16,7 +17,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.2.0';
+const String mutate4dartVersion = '0.3.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -77,9 +78,10 @@ class Mutate4DartRunner {
         defaultsTo: '0',
         help: 'Minimum mutation score (0-100); below it exits 2.')
     ..addOption('format',
-        allowed: ['console', 'json'],
+        allowed: ['console', 'json', 'markdown'],
         defaultsTo: 'console',
-        help: 'Report format (json writes only JSON to stdout).')
+        help: 'Report format: json and markdown write only the report to '
+            'stdout (markdown suits a CI job summary or PR comment).')
     ..addOption('jobs',
         abbr: 'j',
         help: 'Mutants run at once, each in an isolated shadow copy of '
@@ -146,10 +148,7 @@ class Mutate4DartRunner {
     if (results == null) return ExitCodes.usageError;
     final report =
         MutationReport.build(results, projectRoot: root, lcovPath: lcov);
-    final renderer = ReportRenderer(root);
-    stdout.write(options['format'] == 'json'
-        ? '${renderer.json(report)}\n'
-        : renderer.console(report));
+    stdout.write(_render(options['format'] as String, report, root));
     final threshold = double.tryParse(options['threshold'] as String) ?? 0;
     return (report.score ?? 100) < threshold
         ? ExitCodes.thresholdMissed
@@ -167,6 +166,13 @@ class Mutate4DartRunner {
         ? _runPlan(plan, runner)
         : _runParallel(plan, runner.command, runner.projectRoot, jobs);
   }
+
+  static String _render(String format, MutationReport report, String root) =>
+      switch (format) {
+        'json' => '${ReportRenderer(root).json(report)}\n',
+        'markdown' => MarkdownRenderer(root).render(report),
+        _ => ReportRenderer(root).console(report),
+      };
 
   Future<List<MutantResult>?> _runPlan(
     MutationPlan plan,

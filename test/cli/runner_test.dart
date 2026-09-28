@@ -13,7 +13,7 @@ void main() {
   tearDown(() => root.deleteSync(recursive: true));
 
   test('--version and --help', () async {
-    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.2.0\n');
+    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.3.0\n');
     final help = await runCli(root, ['--help']);
     expect(help.exitCode, ExitCodes.success);
     expect(help.stdout, contains('--test-command'));
@@ -70,5 +70,12 @@ void main() {
     final run = await runCli(root, ['--jobs', '1'], fake: fake);
     expect(run.stdout, contains('Mutation score: 33.3% (3 mutants)'));
     expect(fake.cwd, root.path);
+  });
+
+  test('--format markdown writes the report as Markdown', () async {
+    final run =
+        await runCli(root, ['--format', 'markdown'], fake: killWhen('a - b'));
+    expect(run.stdout, startsWith('## Mutation testing (mutate4dart)'));
+    expect(run.stdout, contains('```diff'));
   });
 }

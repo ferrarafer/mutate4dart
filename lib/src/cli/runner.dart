@@ -9,6 +9,7 @@ import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
 import '../report/markdown_renderer.dart';
 import '../report/mutation_report.dart';
+import '../run/coverage_collector.dart';
 import '../run/mutation_runner.dart';
 import '../run/parallel_runner.dart';
 import '../run/test_command.dart';
@@ -17,7 +18,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.3.0';
+const String mutate4dartVersion = '0.4.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -57,6 +58,11 @@ class Mutate4DartRunner {
         help: 'LCOV file: only covered lines are mutated.')
     ..addFlag('coverage',
         defaultsTo: true, help: 'Skip mutants on lines no test executes.')
+    ..addFlag('collect-coverage',
+        negatable: false,
+        help: 'Collect coverage by running only the tests that import the '
+            'target files, into $collectedLcovPath (Flutter projects), '
+            'instead of reading --lcov.')
     ..addFlag('diff',
         negatable: false, help: 'Only mutate lines changed since HEAD.')
     ..addOption('diff-base',
@@ -124,18 +130,25 @@ class Mutate4DartRunner {
     for (final file in runner.recoverBackups()) {
       stderr.writeln('Restored $file from an interrupted run.');
     }
-    final lcov = _lcovPath(options, root);
+    final files = MutationPlan.dartFiles(
+        root, options.rest.isEmpty ? const ['lib'] : options.rest);
+    final selector = TestSelector.build(root);
+    final reach = TestReach.values.byName(options['reach'] as String);
+    final lcov = options['collect-coverage'] as bool
+        ? await _collectCoverage(runner.command, root, [
+            for (final f in files) ...selector.testsFor(f, reach: reach),
+          ])
+        : _lcovPath(options, root);
     final plan = MutationPlan.build(
       projectRoot: root,
-      files: MutationPlan.dartFiles(
-          root, options.rest.isEmpty ? const ['lib'] : options.rest),
+      files: files,
       finder: MutantFinder(operators: _operators(options)),
       filter: MutantFilter(
         coverage: lcov == null ? null : CoverageMap.load(lcov, root),
         diff: await _diff(options, root),
       ),
-      selector: TestSelector.build(root),
-      reach: TestReach.values.byName(options['reach'] as String),
+      selector: selector,
+      reach: reach,
       lcovPath: lcov,
       maxMutants: _intOption(options, 'max-mutants'),
     );
@@ -248,6 +261,27 @@ class Mutate4DartRunner {
     return custom == null
         ? TestCommand.detect(root)
         : TestCommand.parse(custom);
+  }
+
+  Future<String?> _collectCoverage(
+    TestCommand command,
+    String root,
+    List<String> tests,
+  ) async {
+    final collector =
+        CoverageCollector(projectRoot: root, command: command, run: run);
+    if (!collector.supported) {
+      throw const _UsageError('--collect-coverage needs flutter test. For '
+          'Dart projects run dart test --coverage and format_coverage, then '
+          'pass --lcov.');
+    }
+    stderr.writeln('Collecting coverage from ${tests.toSet().length} test '
+        'file(s)...');
+    try {
+      return await collector.collect(tests.toSet().toList()..sort());
+    } on RedBaselineException catch (e) {
+      throw _UsageError('$e\n${e.output}');
+    }
   }
 
   String? _lcovPath(ArgResults options, String root) {

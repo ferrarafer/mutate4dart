@@ -37,6 +37,12 @@ not swap an `&&`/`||` expression that contains a promoting test.
   a mutant is kept only when its line has a hit count > 0. LCOV entries
   that are not project-relative are ignored. A missing LCOV file is a usage
   error unless `--no-coverage` is given.
+- **Collected coverage**: with `--collect-coverage`, the test files
+  selected (section 5) for all target files shall first run once with
+  `--coverage --coverage-path .mutate4dart/lcov.info`, and that file is
+  used instead of `--lcov`. Only test commands running `flutter test` are
+  supported (usage error otherwise). Failing tests shall be a usage error
+  (exit 1). Without selected tests nothing runs.
 - **Diff**: with `--diff` (base `HEAD`) or `--diff-base <ref>`, a mutant is
   kept only when its line is added or changed in `git diff <ref>`.
 

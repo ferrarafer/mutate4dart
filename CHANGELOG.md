@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- `--collect-coverage` (Flutter): runs only the test files that import the
+  target files, with coverage, into `.mutate4dart/lcov.info`, so
+  mutating one service no longer requires coverage from the whole suite.
+  The user's `coverage/` is left untouched.
+
 ## 0.3.0
 
 - `--format markdown`: a report for CI job summaries

@@ -66,6 +66,7 @@ dart pub global activate -sgit https://github.com/ferrarafer/mutate4dart.git
 ## Usage
 
 ```sh
+mutate4dart lib/services/wager_service.dart --collect-coverage  # Flutter: one step
 flutter test --coverage              # or: dart test --coverage + format_coverage
 mutate4dart lib/services/wager_service.dart
 mutate4dart --diff-base origin/next  # only lines changed on this branch
@@ -77,6 +78,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `paths...` | `lib` | Files or directories to mutate |
 | `--lcov` | `coverage/lcov.info` | Coverage used to skip lines no test executes |
 | `--[no-]coverage` | on | Turn the coverage filter off |
+| `--collect-coverage` | | Flutter: run only the tests that import the target files, with coverage, into `.mutate4dart/lcov.info` (no full-suite coverage needed) |
 | `--diff` / `--diff-base <ref>` | | Only mutate lines changed since `HEAD` / `<ref>` |
 | `--test-command` | detected | Test command; test files are appended |
 | `--reach` | `direct` | `transitive` also runs tests that reach the file through other libraries |

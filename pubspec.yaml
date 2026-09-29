@@ -3,9 +3,7 @@ description: >-
   Mutation testing for Dart and Flutter projects. Mutates covered code with
   package:analyzer, runs only the tests that import it, and reports a
   mutation score per method next to its CRAP score (sibling of crap_dart).
-version: 0.12.1
-# Until crap_dart is on pub.dev: the git dependency blocks publishing.
-publish_to: none
+version: 0.12.2
 repository: https://github.com/ferrarafer/mutate4dart
 issue_tracker: https://github.com/ferrarafer/mutate4dart/issues
 topics:
@@ -23,10 +21,7 @@ executables:
 dependencies:
   analyzer: ^14.4.0
   args: ^2.5.0
-  crap_dart:
-    git:
-      url: https://github.com/ferrarafer/crap_dart.git
-      ref: v0.13.1
+  crap_dart: ^0.13.1
   glob: ^2.1.2
   path: ^1.9.0
   yaml: ^3.1.2

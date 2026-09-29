@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.2
+
+- Depends on [crap_dart](https://pub.dev/packages/crap_dart) `^0.13.1`
+  from pub.dev instead of a git tag, so crap_dart fixes reach mutate4dart
+  without a new mutate4dart release. First release meant for pub.dev.
+
 ## 0.12.1
 
 - crap_dart 0.13.1: sources parse at their package's language version.

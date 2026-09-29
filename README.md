@@ -64,7 +64,13 @@ Flutter projects (a pubspec that depends on `flutter`) run
 ## Install
 
 ```sh
-dart pub global activate -sgit https://github.com/ferrarafer/mutate4dart.git
+dart pub global activate mutate4dart
+```
+
+From the repository (a tag, or the latest `main`):
+
+```sh
+dart pub global activate -sgit https://github.com/ferrarafer/mutate4dart.git --git-ref v0.12.2
 ```
 
 ## Usage

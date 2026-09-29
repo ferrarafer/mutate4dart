@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:crap4dart/crap4dart.dart';
+import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
 import '../mutation/mutant.dart';
@@ -105,8 +106,14 @@ class MutationPlan {
   final List<String> unparsed;
 
   /// The Dart files under [paths] (files or directories, relative to
-  /// [projectRoot]), excluding generated code, sorted.
-  static List<String> dartFiles(String projectRoot, List<String> paths) {
+  /// [projectRoot]), sorted, without generated code and without files
+  /// matching an [exclude] glob (matched against the project-relative
+  /// path, with `/` separators).
+  static List<String> dartFiles(
+    String projectRoot,
+    List<String> paths, {
+    List<Glob> exclude = const [],
+  }) {
     final files = <String>{};
     for (final path in paths) {
       final absolute = p.join(projectRoot, path);
@@ -120,8 +127,17 @@ class MutationPlan {
         }
       }
     }
-    return files.where((f) => !_generatedSuffixes.any(f.endsWith)).toList()
-      ..sort();
+    return [
+      for (final f in files)
+        if (!_skipped(f, exclude)) f,
+    ]..sort();
+  }
+
+  /// Generated code, or a file matching an `--exclude` glob.
+  static bool _skipped(String file, List<Glob> exclude) {
+    if (_generatedSuffixes.any(file.endsWith)) return true;
+    final posix = p.posix.joinAll(p.split(file));
+    return exclude.any((g) => g.matches(posix));
   }
 
   /// The methods of [source], for the coverage filter's fallback on

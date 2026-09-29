@@ -21,6 +21,7 @@ class ParallelMutationRunner {
     required this.command,
     required this.jobs,
     this.run = runProcess,
+    this.timeout = const MutantTimeout(),
   });
 
   /// Project root.
@@ -34,6 +35,9 @@ class ParallelMutationRunner {
 
   /// Process runner (injectable for tests).
   final ProcessRunner run;
+
+  /// Timeout of each mutant's test run.
+  final MutantTimeout timeout;
 
   final List<ShadowWorkspace> _workspaces = [];
 
@@ -70,6 +74,7 @@ class ParallelMutationRunner {
             projectRoot: _newWorkspace(files).projectRoot,
             command: command,
             run: run,
+            timeout: timeout,
           )),
       ];
       // Not eager: after an error the other workers finish their current

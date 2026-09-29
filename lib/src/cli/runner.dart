@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:crap4dart/crap4dart.dart';
+import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
 import '../mutation/mutant.dart';
@@ -19,7 +20,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.7.1';
+const String mutate4dartVersion = '0.8.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -76,6 +77,10 @@ class Mutate4DartRunner {
         defaultsTo: 'direct',
         help: 'Run tests that import the file directly, or through any '
             'chain of imports.')
+    ..addMultiOption('exclude',
+        help: 'Glob of project-relative files not to mutate, e.g. '
+            '"lib/l10n/**" (repeatable). Generated code (*.g.dart, '
+            '*.freezed.dart, *.gr.dart, *.mocks.dart) is always skipped.')
     ..addOption('operators',
         help: 'Comma-separated operator ids (default: all).')
     ..addOption('max-mutants',
@@ -95,6 +100,14 @@ class Mutate4DartRunner {
         abbr: 'j',
         help: 'Mutants run at once, each in an isolated shadow copy of '
             'the project; 1 mutates in place (default: min(4, cores/2)).')
+    ..addOption('min-timeout',
+        defaultsTo: '30',
+        help: 'Seconds a mutant\'s tests may always run before it counts '
+            'as a timeout.')
+    ..addOption('timeout-factor',
+        defaultsTo: '3',
+        help: 'A mutant\'s tests may run this multiple of their unmutated '
+            'duration (at least --min-timeout).')
     ..addFlag('dry-run',
         negatable: false,
         help: 'List the planned mutants and their tests without running.');
@@ -129,6 +142,7 @@ class Mutate4DartRunner {
       projectRoot: root,
       command: _testCommand(options, root),
       run: run,
+      timeout: _timeout(options),
     );
     for (final file in runner.recoverBackups()) {
       stderr.writeln('Restored $file from an interrupted run.');
@@ -180,12 +194,12 @@ class Mutate4DartRunner {
     final jobs = _intOption(options, 'jobs') ?? defaultJobs();
     return jobs == 1
         ? _runPlan(plan, runner)
-        : _runParallel(plan, runner.command, runner.projectRoot, jobs);
+        : _runParallel(plan, runner, jobs);
   }
 
-  /// The files to mutate: `paths` (default `lib`), narrowed to changed
-  /// files in diff mode. Also keeps --collect-coverage from running the
-  /// tests of untouched files.
+  /// The files to mutate: `paths` (default `lib`) minus `--exclude`,
+  /// narrowed to changed files in diff mode. Also keeps
+  /// --collect-coverage from running the tests of untouched files.
   static List<String> _targetFiles(
     ArgResults options,
     String root,
@@ -193,7 +207,8 @@ class Mutate4DartRunner {
   ) =>
       [
         for (final f in MutationPlan.dartFiles(
-            root, options.rest.isEmpty ? const ['lib'] : options.rest))
+            root, options.rest.isEmpty ? const ['lib'] : options.rest,
+            exclude: _excludes(options)))
           if (diff == null || diff.hasRealChanges(f)) f,
       ];
 
@@ -236,15 +251,15 @@ class Mutate4DartRunner {
 
   Future<List<MutantResult>?> _runParallel(
     MutationPlan plan,
-    TestCommand command,
-    String root,
+    MutationRunner runner,
     int jobs,
   ) async {
     final parallel = ParallelMutationRunner(
-      projectRoot: root,
-      command: command,
+      projectRoot: runner.projectRoot,
+      command: runner.command,
       jobs: jobs,
       run: run,
+      timeout: runner.timeout,
     );
     final interrupt = ProcessSignal.sigint.watch().listen((_) {
       parallel.dispose();
@@ -332,6 +347,29 @@ class Mutate4DartRunner {
             (throw _UsageError('Unknown operator "$id". Known: '
                 '${MutationOperator.values.map((o) => o.id).join(', ')}')),
     };
+  }
+
+  static List<Glob> _excludes(ArgResults options) {
+    try {
+      return [
+        for (final pattern in options['exclude'] as List<String>)
+          Glob(pattern, context: p.posix),
+      ];
+    } on FormatException catch (e) {
+      throw _UsageError('Invalid --exclude glob: ${e.message}');
+    }
+  }
+
+  MutantTimeout _timeout(ArgResults options) {
+    final raw = options['timeout-factor'] as String;
+    final factor = double.tryParse(raw);
+    if (factor == null || factor < 1) {
+      throw _UsageError('--timeout-factor must be a number >= 1, got "$raw".');
+    }
+    return MutantTimeout(
+      min: Duration(seconds: _intOption(options, 'min-timeout')!),
+      factor: factor,
+    );
   }
 
   int? _intOption(ArgResults options, String name) {

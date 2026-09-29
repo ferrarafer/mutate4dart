@@ -56,6 +56,29 @@ class RedBaselineException implements Exception {
   String toString() => 'Tests fail on unmutated code: ${tests.join(' ')}';
 }
 
+/// How long a mutant's tests may run before the mutant counts as a
+/// [MutantStatus.timeout]: [factor] times their baseline duration, at
+/// least [min].
+class MutantTimeout {
+  /// Creates a [MutantTimeout].
+  const MutantTimeout({
+    this.min = const Duration(seconds: 30),
+    this.factor = 3,
+  });
+
+  /// Lower bound for a mutant's timeout.
+  final Duration min;
+
+  /// Multiple of the tests' baseline duration.
+  final double factor;
+
+  /// The timeout for tests whose unmutated run took [baseline].
+  Duration forBaseline(Duration baseline) {
+    final scaled = baseline * factor;
+    return scaled > min ? scaled : min;
+  }
+}
+
 /// Applies mutants one at a time and runs their tests.
 ///
 /// The original of every mutated file is backed up under
@@ -68,8 +91,7 @@ class MutationRunner {
     required this.projectRoot,
     required this.command,
     this.run = runProcess,
-    this.minTimeout = const Duration(seconds: 30),
-    this.timeoutFactor = 3,
+    this.timeout = const MutantTimeout(),
   });
 
   /// Project root; mutant files are relative to it.
@@ -81,11 +103,8 @@ class MutationRunner {
   /// Process runner (injectable for tests).
   final ProcessRunner run;
 
-  /// Lower bound for a mutant's timeout.
-  final Duration minTimeout;
-
-  /// A mutant's timeout is this multiple of its tests' baseline duration.
-  final int timeoutFactor;
+  /// Timeout of each mutant's test run.
+  final MutantTimeout timeout;
 
   final Map<String, Duration> _baselines = {};
 
@@ -137,17 +156,14 @@ class MutationRunner {
     }
   }
 
-  Duration _timeoutFor(List<String> tests) {
-    final baseline = _baselines[tests.join('\n')] ?? Duration.zero;
-    final scaled = baseline * timeoutFactor;
-    return scaled > minTimeout ? scaled : minTimeout;
-  }
+  Duration _timeoutFor(List<String> tests) =>
+      timeout.forBaseline(_baselines[tests.join('\n')] ?? Duration.zero);
 
-  Future<CommandResult> _runTests(List<String> tests, Duration timeout) => run(
+  Future<CommandResult> _runTests(List<String> tests, Duration limit) => run(
         command.executable,
         command.argumentsFor(tests),
         workingDirectory: projectRoot,
-        timeout: timeout,
+        timeout: limit,
       );
 
   static MutantStatus _statusOf(CommandResult result) {

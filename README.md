@@ -29,7 +29,8 @@ Mutation score: 85.8% (228 mutants)
 1. **Parse** each file under `lib/` (or the given paths) with
    `package:analyzer`, the SDK's own parser, and generate mutants. Generated
    code (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.mocks.dart`),
-   annotations and `assert`s are skipped.
+   files matching an `--exclude` glob, annotations and `assert`s are
+   skipped.
 2. **Filter.** Only mutants on lines the tests executed are kept, using an
    LCOV file. A mutant no test runs can only survive. The Dart VM never
    lists a line that holds only a literal, such as `return true;`, so
@@ -78,6 +79,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | Option | Default | Meaning |
 |---|---|---|
 | `paths...` | `lib` | Files or directories to mutate |
+| `--exclude <glob>` | | Skip project-relative files matching the glob, e.g. `'lib/l10n/**'` (repeatable) |
 | `--lcov` | `coverage/lcov.info` | Coverage used to skip lines no test executes |
 | `--[no-]coverage` | on | Turn the coverage filter off |
 | `--collect-coverage` | | Flutter: run only the tests that import the target files, with coverage, into `.mutate4dart/lcov.info` (no full-suite coverage needed) |
@@ -89,6 +91,8 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
 | `--format` | `console` | `json`, `markdown`, `stryker` or `html` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment; see [Reports](#reports)) |
 | `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |
+| `--min-timeout S` | `30` | Seconds a mutant's tests may always run before it counts as a timeout |
+| `--timeout-factor F` | `3` | A mutant's tests may run F× their unmutated duration (at least `--min-timeout`) |
 | `--dry-run` | | Plan only, nothing is run |
 
 Exit codes: `0` success, `1` usage/configuration error or tests failing on
@@ -143,7 +147,8 @@ Ignored mutants are not run and not scored; the plan summary counts them.
 
 - **killed**: a selected test failed. The suite detects the change.
 - **timeout**: the tests ran longer than 3× their baseline duration (at
-  least 30 s), usually an infinite loop. Counted as detected.
+  least 30 s; see `--timeout-factor` and `--min-timeout`), usually an
+  infinite loop. Counted as detected.
 - **survived**: every selected test passed. This is a gap.
 - **invalid**: the mutant did not compile. Excluded from the score.
 

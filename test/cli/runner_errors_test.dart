@@ -19,6 +19,10 @@ void main() {
       ['--operators', 'nope'],
       ['--max-mutants', '0'],
       ['--lcov', 'missing.info'],
+      ['--exclude', 'lib/['],
+      ['--min-timeout', '0'],
+      ['--timeout-factor', '0.5'],
+      ['--timeout-factor', 'x'],
     ]) {
       final run = await runCli(root, args);
       expect(run.exitCode, ExitCodes.usageError, reason: '$args');

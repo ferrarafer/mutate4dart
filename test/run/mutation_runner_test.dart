@@ -30,7 +30,7 @@ void main() {
         projectRoot: root.path,
         command: const TestCommand('dart', ['test']),
         run: fake.call,
-        minTimeout: const Duration(seconds: 5),
+        timeout: const MutantTimeout(min: Duration(seconds: 5)),
       );
 
   Future<MutantStatus> statusFor(CommandResult mutantResult) async {

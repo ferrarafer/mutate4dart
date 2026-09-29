@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0
+
+- `--exclude <glob>` (repeatable) skips files whose project-relative path
+  matches the glob, such as `lib/l10n/**`, on top of the generated code
+  that is always skipped.
+- `--min-timeout S` (default 30) and `--timeout-factor F` (default 3) set
+  the mutant timeout, `max(S, F × baseline)`, for slow widget tests or
+  tight CI budgets. Both apply in place and in parallel shadows.
+- `MutationRunner` and `ParallelMutationRunner` take a `MutantTimeout`
+  instead of `minTimeout` / `timeoutFactor`.
+
 ## 0.7.1
 
 - `boolean_literal` no longer flips `growable: true/false`

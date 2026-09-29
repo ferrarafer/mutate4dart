@@ -11,7 +11,9 @@ detect each mutant, and reports which mutants survived.
 `paths` are files or directories relative to the project root (default
 `lib`). Directories are searched recursively for `.dart` files. Files
 ending in `.g.dart`, `.freezed.dart`, `.gr.dart` or `.mocks.dart` shall
-never be mutated. Files that do not parse shall be skipped with a message
+never be mutated. `--exclude <glob>` (repeatable) shall drop the files
+whose project-relative path, with `/` separators, matches the glob, given
+paths included. An invalid glob is a usage error (exit 1). Files that do not parse shall be skipped with a message
 on stderr.
 
 ## 3. Mutants
@@ -127,7 +129,10 @@ workspace*, and the original project shall not be modified:
 
 In place, before any mutant runs, each distinct set of test files shall
 run once on the unmutated code. A failure or timeout shall abort with exit code 1.
-Its duration *d* sets the mutant timeout `max(30 s, 3·d)`.
+Its duration *d* sets the mutant timeout `max(m, f·d)`, where *m* is
+`--min-timeout` (seconds, default 30, a positive integer) and *f* is
+`--timeout-factor` (default 3, a number ≥ 1). Other values are usage
+errors (exit 1). Parallel workers use the same timeout.
 
 Each mutant shall be applied to its file. The original shall first be
 written to `.mutate4dart/backup/<path>` and shall be restored after the run

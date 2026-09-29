@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+
+- `--format junit`: JUnit XML for CI test report views (GitLab, Jenkins,
+  Azure DevOps). One test suite per mutated file, one test case per
+  mutant under its method; survivors are failures carrying the diff, the
+  test files run and the operator's hint, invalid mutants are skipped.
+
 ## 0.9.0
 
 - Config file: `mutate4dart.yaml` at the project root, or `--config

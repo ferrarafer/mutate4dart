@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
+import '../report/junit_renderer.dart';
 import '../report/markdown_renderer.dart';
 import '../report/mutation_report.dart';
 import '../report/stryker_renderer.dart';
@@ -21,7 +22,7 @@ import 'config_file.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.9.0';
+const String mutate4dartVersion = '0.10.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -93,12 +94,13 @@ class Mutate4DartRunner {
         defaultsTo: '0',
         help: 'Minimum mutation score (0-100); below it exits 2.')
     ..addOption('format',
-        allowed: ['console', 'json', 'markdown', 'stryker', 'html'],
+        allowed: ['console', 'json', 'markdown', 'stryker', 'html', 'junit'],
         defaultsTo: 'console',
         help: 'Report format; all but console write only the report to '
             'stdout. markdown suits a CI job summary or PR comment, stryker '
             'is the Stryker JSON schema (dashboard), html a page showing '
-            'it with the mutation-testing-elements viewer.')
+            'it with the mutation-testing-elements viewer, junit JUnit XML '
+            '(survivors as failures) for CI test reports.')
     ..addOption('jobs',
         abbr: 'j',
         help: 'Mutants run at once, each in an isolated shadow copy of '
@@ -246,6 +248,7 @@ class Mutate4DartRunner {
         'markdown' => MarkdownRenderer(root).render(report),
         'stryker' => '${StrykerRenderer(root).json(report)}\n',
         'html' => StrykerRenderer(root).html(report),
+        'junit' => JUnitRenderer(root).render(report),
         _ => ReportRenderer(root).console(report),
       };
 

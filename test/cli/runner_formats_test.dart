@@ -44,4 +44,12 @@ void main() {
     expect(run.stdout, startsWith('## Mutation testing (mutate4dart)'));
     expect(run.stdout, contains('```diff'));
   });
+
+  test('--format junit writes JUnit XML with survivors as failures', () async {
+    final run =
+        await runCli(root, ['--format', 'junit'], fake: killWhen('a - b'));
+    expect(run.stdout, startsWith('<?xml'));
+    expect(run.stdout, contains('<testsuite name="lib/calc.dart"'));
+    expect(run.stdout, contains('<failure type="survived"'));
+  });
 }

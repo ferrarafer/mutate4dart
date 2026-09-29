@@ -9,6 +9,7 @@ export 'src/cli/mutation_plan.dart';
 export 'src/cli/runner.dart';
 export 'src/mutation/mutant.dart';
 export 'src/mutation/mutant_finder.dart';
+export 'src/report/junit_renderer.dart';
 export 'src/report/markdown_renderer.dart';
 export 'src/report/mutation_report.dart';
 export 'src/report/stryker_renderer.dart';

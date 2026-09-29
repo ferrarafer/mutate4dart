@@ -177,6 +177,18 @@ Score = detected / (detected + survived), N/A when that is zero.
 - HTML (`--format html`): one page loading `mutation-testing-elements` from
   a CDN and assigning the Stryker document to its `report` property, with
   `<` in the JSON written as its JSON unicode escape (backslash `u003c`). Stdout carries only HTML.
+- JUnit (`--format junit`): a UTF-8 XML document with a `<testsuites
+  name="mutate4dart">` root holding one `<testsuite name="<file>">` per
+  mutated file. Both carry `tests` (mutants), `failures` (survived),
+  `errors` (`0`) and `skipped` (invalid). Each mutant is a `<testcase
+  classname="<method>" name="line <n> <operator>: <original> ->
+  <replacement>" file="<file>" line="<n>">`, newlines in the texts shown
+  as `\n` and an empty replacement as `(removed)`. A survived mutant holds `<failure type="survived">` whose text
+  is `<file>:<line> <operator>`, the `- ` original and `+ ` mutated line,
+  `Tests run:` with every test file run and `Hint:` with the operator's
+  hint; an invalid one holds `<skipped>`; killed and timeout are empty
+  (passed). XML special characters are escaped and characters XML 1.0
+  forbids are dropped. Stdout carries only XML.
 
 ## 9. Configuration file
 

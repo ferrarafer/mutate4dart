@@ -89,7 +89,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--operators` | all | Comma-separated operator ids (see below) |
 | `--max-mutants N` | | Only the N mutants in the riskiest methods |
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
-| `--format` | `console` | `json`, `markdown`, `stryker` or `html` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment; see [Reports](#reports)) |
+| `--format` | `console` | `json`, `markdown`, `stryker`, `html` or `junit` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment; see [Reports](#reports)) |
 | `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |
 | `--min-timeout S` | `30` | Seconds a mutant's tests may always run before it counts as a timeout |
 | `--timeout-factor F` | `3` | A mutant's tests may run F× their unmutated duration (at least `--min-timeout`) |
@@ -188,6 +188,7 @@ redirect it to a file:
 mutate4dart --format markdown >> "$GITHUB_STEP_SUMMARY"   # CI job summary
 mutate4dart --format stryker > mutation-report.json       # Stryker schema
 mutate4dart --format html > mutation-report.html          # open in a browser
+mutate4dart --format junit > mutation-junit.xml           # CI test report
 ```
 
 - `json`: mutate4dart's own per-method document, with CRAP and the test
@@ -208,6 +209,12 @@ mutate4dart --format html > mutation-report.html          # open in a browser
   it with the [mutation-testing-elements](https://github.com/stryker-mutator/mutation-testing-elements)
   viewer (loaded from jsDelivr, so viewing needs network access): per-file
   source with the mutants inline, filters by status and operator.
+- `junit`: JUnit XML for the test report view of GitLab
+  (`artifacts:reports:junit`), Jenkins, Azure DevOps and others. Each
+  mutated file is a test suite and each mutant a test case named after
+  its line, operator and change, under its method. Survivors are
+  failures whose body has the diff, the test files run and the hint;
+  invalid mutants are skipped; detected mutants pass.
 
 ## Limitations
 

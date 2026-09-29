@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+- `boolean_literal` no longer flips `growable: true/false`
+  (`toList(growable: false)`, `List.filled(..., growable: true)`). The
+  flag only tunes performance, so those mutants always survived; a run
+  on a Flutter service produced two of them.
+- README: example output and limitations refreshed from a 0.7.1 run.
+
 ## 0.7.0
 
 - Ignore pragma: `// mutate4dart: ignore` silences the mutants of its

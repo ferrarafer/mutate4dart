@@ -39,4 +39,17 @@ void main() {
         '}\n';
     expect(mutate(src), isEmpty);
   });
+
+  test('skips growable: booleans but keeps other named booleans', () {
+    const src = 'List<int> f(Iterable<int> xs) {\n'
+        '  g(sorted: true);\n'
+        '  return xs.toList(growable: false);\n'
+        '}\n';
+    expect(mutate(src, only: {MutationOperator.booleanLiteral}), [
+      'List<int> f(Iterable<int> xs) {\n'
+          '  g(sorted: false);\n'
+          '  return xs.toList(growable: false);\n'
+          '}\n',
+    ]);
+  });
 }

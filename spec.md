@@ -33,6 +33,9 @@ operator, is *ignored*: it shall not be run, not be listed by `--dry-run`
 and not be scored. The plan summary shall report the number of ignored
 mutants when it is not zero. Unknown ids match nothing.
 
+`boolean_literal` shall not flip a literal that is the value of a
+`growable:` named argument.
+
 `collection` swaps the member names `isEmpty` ↔ `isNotEmpty` and
 `first` ↔ `last` in any property access, and `any` ↔ `every` in method
 invocations that have a target. `assignment` also turns `??=` into `=`.

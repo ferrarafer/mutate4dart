@@ -364,6 +364,7 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitBooleanLiteral(BooleanLiteral node) {
+    if (_isPerformanceHint(node)) return;
     _swapToken(
       MutationOperator.booleanLiteral,
       node.literal,
@@ -416,3 +417,14 @@ String _flipIncrement(String lexeme) => lexeme == '++' ? '--' : '++';
 
 bool _isStringConcatenation(BinaryExpression node) =>
     node.leftOperand is StringLiteral || node.rightOperand is StringLiteral;
+
+/// Named arguments that only tune performance, never behaviour a test can
+/// observe: `toList(growable: false)`, `List.filled(n, 0, growable: true)`.
+const Set<String> _performanceHints = {'growable'};
+
+/// Whether [node] is the value of a performance-only named argument.
+bool _isPerformanceHint(BooleanLiteral node) {
+  final parent = node.parent;
+  return parent is NamedExpression &&
+      _performanceHints.contains(parent.name.label.name);
+}

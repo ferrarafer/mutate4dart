@@ -11,17 +11,17 @@ and runs the tests after each one. A mutant that no test catches
 (*survived*) points at logic that is executed but not really tested.
 
 ```
-$ mutate4dart lib/services/wager_service.dart     # a Flutter app, 184 mutants, 11.5 min
+$ mutate4dart lib/services/wager_service.dart --collect-coverage   # a Flutter app, 228 mutants, 7.8 min
  SCORE  DET  SURV  INV   CRAP  CC  METHOD                                   FILE:LINE
- 47.1%    8     9    1   11.1  11  WagerService._sumStrokesForPlayer        lib/services/wager_service.dart:899
- 53.1%   17    15    6   26.0  26  WagerService._calculateWolfTotals        lib/services/wager_service.dart:781
+ 65.0%   13     7    1   11.0  11  WagerService._sumStrokesForPlayer         lib/services/wager_service.dart:904
+ 71.1%   27    11    0   19.0  19  WagerService._calculatePressOpportunity   lib/services/wager_service.dart:462
  ...
 Survivors (the tests miss these changes):
-  lib/services/wager_service.dart:928 [arithmetic]
-    - total += (entry.score - allocation);
-    + total += (entry.score + allocation);
+  lib/services/wager_service.dart:916 [relational_boundary]
+    - if (index < 0 || index >= round.holes.length) continue;
+    + if (index <= 0 || index >= round.holes.length) continue;
   ...
-Mutation score: 69.9% (184 mutants)
+Mutation score: 85.8% (228 mutants)
 ```
 
 ## How it works
@@ -104,7 +104,7 @@ unmutated code, `2` mutation score below `--threshold`.
 | `arithmetic` | `+` ↔ `-`, `*` ↔ `/`, `%` / `~/` → `*` (not string `+`) |
 | `assignment` | `+=` ↔ `-=`, `*=` ↔ `/=`, `??=` → `=` |
 | `increment` | `++` ↔ `--` |
-| `boolean_literal` | `true` ↔ `false` |
+| `boolean_literal` | `true` ↔ `false` (not a `growable:` argument, which only tunes performance) |
 | `remove_not` | `!x` → `x` |
 | `negate_condition` | `if` / `while` / `?:` condition `c` → `!(c)` (skipped when `equality` or `remove_not` already yield the same program) |
 | `null_coalescing` | `a ?? b` → `b` |
@@ -179,12 +179,14 @@ mutate4dart --format html > mutation-report.html          # open in a browser
   viewer (loaded from jsDelivr, so viewing needs network access): per-file
   source with the mutants inline, filters by status and operator.
 
-## Limitations (0.2)
+## Limitations
 
 - Each worker's first `flutter test` run compiles from a cold cache
   (about 10 s on a Flutter app); later runs take about 3–4 s per mutant.
-  On an 11-core machine, 4 workers were fastest (2.5× over sequential).
-  More workers contend for CPU and memory.
+  On an 11-core machine, 4 workers were fastest (2.5× over sequential):
+  228 mutants of a 1,100-line Flutter service, coverage collection
+  included, took under 8 minutes. More workers contend for CPU and
+  memory.
 - Some surviving mutants are *equivalent*: they change the code without
   changing its behaviour. Review survivors before writing tests, and
   silence the equivalent ones with a pragma (see [Ignoring

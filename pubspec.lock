@@ -85,11 +85,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.13.0"
-      resolved-ref: bf19a67550bbe0521127c8e1a640159b9a2c6614
+      ref: "v0.13.1"
+      resolved-ref: "352fe51c6e7d7933307fea3f8d36d25da5725ac0"
       url: "https://github.com/ferrarafer/crap_dart.git"
     source: git
-    version: "0.13.0"
+    version: "0.13.1"
   crypto:
     dependency: transitive
     description:

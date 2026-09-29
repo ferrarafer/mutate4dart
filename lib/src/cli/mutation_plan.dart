@@ -53,9 +53,10 @@ class MutationPlan {
       final List<Mutant> mutants;
       final List<MethodInfo> methods;
       try {
-        final source = File(p.join(projectRoot, file)).readAsStringSync();
-        mutants = finder.find(source, file: file);
-        methods = _methods(source, file);
+        final path = p.join(projectRoot, file);
+        final source = File(path).readAsStringSync();
+        mutants = finder.find(source, file: file, path: path);
+        methods = _methods(source, file, path);
       } on DartParseException {
         unparsed.add(file);
         continue;
@@ -151,8 +152,8 @@ class MutationPlan {
 
   /// The methods of [source], for the coverage filter's fallback on
   /// lines the LCOV file does not list.
-  static List<MethodInfo> _methods(String source, String file) {
-    final parsed = DartParser().parse(content: source, path: file);
+  static List<MethodInfo> _methods(String source, String file, String path) {
+    final parsed = DartParser().parse(content: source, path: path);
     return const MethodExtractor(
       countConstructors: true,
     ).extract(parsed.unit, parsed.lineInfo, filePath: file);

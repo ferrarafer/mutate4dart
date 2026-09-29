@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.12.1
+
+- crap_dart 0.13.1: sources parse at their package's language version.
+  With 0.13.0 (analyzer 14 parsing at the newest version), a file using
+  `final` on a function parameter, valid in a Dart 3.9 project, was
+  skipped as "does not parse".
+- The finder and the method extraction get the file's absolute path, so
+  the language version comes from the target project's `pubspec.yaml`
+  whatever the working directory.
+
 ## 0.12.0
 
 - Depends on [crap_dart](https://github.com/ferrarafer/crap_dart) 0.13.0,

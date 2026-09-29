@@ -72,10 +72,11 @@ class MutantFinder {
   final Set<MutationOperator>? operators;
 
   /// Finds the mutants of [source], reported against [file] (a
-  /// project-relative path). Throws a [DartParseException] when the
-  /// source does not parse.
-  List<Mutant> find(String source, {required String file}) {
-    final parsed = DartParser().parse(content: source, path: file);
+  /// project-relative path). [path], the file's absolute path, selects
+  /// the package language version to parse at (default: [file]). Throws a
+  /// [DartParseException] when the source does not parse.
+  List<Mutant> find(String source, {required String file, String? path}) {
+    final parsed = DartParser().parse(content: source, path: path ?? file);
     final visitor = _MutantVisitor(
       source,
       file,

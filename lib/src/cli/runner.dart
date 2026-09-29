@@ -24,7 +24,7 @@ import 'config_file.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.12.0';
+const String mutate4dartVersion = '0.12.1';
 
 /// Process exit codes.
 abstract final class ExitCodes {

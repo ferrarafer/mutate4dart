@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Ignore pragma: `// mutate4dart: ignore` silences the mutants of its
+  line (trailing) or of the next line (alone on a line); operator ids
+  after `ignore` narrow it. Ignored mutants are not run or scored, and
+  the plan summary counts them. Meant for equivalent mutants.
+
 ## 0.6.0
 
 - New operator `collection`: `isEmpty` ↔ `isNotEmpty`, `first` ↔ `last`

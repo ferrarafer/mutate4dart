@@ -81,19 +81,99 @@ class MutantFinder {
       file,
       parsed.lineInfo,
       operators ?? MutationOperator.values.toSet(),
+      _IgnorePragmas.scan(parsed.unit, parsed.lineInfo, source),
     );
     parsed.unit.accept(visitor);
     return visitor.mutants..sort((a, b) => a.offset.compareTo(b.offset));
   }
 }
 
+/// The lines silenced by `// mutate4dart: ignore [operator ids]`
+/// comments. A trailing comment covers its own line; a comment alone on a
+/// line covers the next line. Without ids every operator is ignored.
+class _IgnorePragmas {
+  _IgnorePragmas._(this._byLine);
+
+  /// Ignored operator ids per line; an empty set means every operator.
+  final Map<int, Set<String>> _byLine;
+
+  static const String _prefix = 'mutate4dart:';
+
+  /// Collects the pragmas from the comment tokens of [unit].
+  static _IgnorePragmas scan(
+    CompilationUnit unit,
+    LineInfo lineInfo,
+    String source,
+  ) {
+    final byLine = <int, Set<String>>{};
+    for (Token? token = unit.beginToken;
+        token != null;
+        token = token.type == TokenType.EOF ? null : token.next) {
+      for (Token? c = token.precedingComments; c != null; c = c.next) {
+        final ids = _parse(c.lexeme);
+        if (ids == null) continue;
+        final target = _targetLine(c, lineInfo, source);
+        byLine[target] = _merge(byLine[target], ids);
+      }
+    }
+    return _IgnorePragmas._(byLine);
+  }
+
+  /// The line a pragma [comment] covers: its own when code precedes it,
+  /// otherwise the next one.
+  static int _targetLine(Token comment, LineInfo lineInfo, String source) {
+    final line = lineInfo.getLocation(comment.offset).lineNumber;
+    final lineStart = lineInfo.getOffsetOfLine(line - 1);
+    final alone = source.substring(lineStart, comment.offset).trim().isEmpty;
+    return alone ? line + 1 : line;
+  }
+
+  /// Two pragmas on one line: an empty set (every operator) wins.
+  static Set<String> _merge(Set<String>? existing, Set<String> ids) {
+    if (existing == null) return ids;
+    if (existing.isEmpty || ids.isEmpty) return {};
+    return {...existing, ...ids};
+  }
+
+  /// The operator ids of an ignore pragma, empty for all, or `null` when
+  /// [comment] is not one.
+  static Set<String>? _parse(String comment) {
+    var text = comment.trim();
+    while (text.startsWith('/')) {
+      text = text.substring(1);
+    }
+    text = text.trim();
+    if (!text.startsWith(_prefix)) return null;
+    final words =
+        text.substring(_prefix.length).trim().split(RegExp(r'[,\s]+'));
+    if (words.first != 'ignore') return null;
+    return {
+      for (final id in words.skip(1))
+        if (id.isNotEmpty) id
+    };
+  }
+
+  /// Whether the pragma on [line] covers [operator].
+  bool covers(int line, MutationOperator operator) {
+    final ids = _byLine[line];
+    return ids != null && (ids.isEmpty || ids.contains(operator.id));
+  }
+}
+
 class _MutantVisitor extends RecursiveAstVisitor<void> {
-  _MutantVisitor(this.source, this.file, this.lineInfo, this.enabled);
+  _MutantVisitor(
+    this.source,
+    this.file,
+    this.lineInfo,
+    this.enabled,
+    this.pragmas,
+  );
 
   final String source;
   final String file;
   final LineInfo lineInfo;
   final Set<MutationOperator> enabled;
+  final _IgnorePragmas pragmas;
   final List<Mutant> mutants = [];
 
   void _add(
@@ -103,13 +183,15 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
     String replacement,
   ) {
     if (!enabled.contains(operator)) return;
+    final line = lineInfo.getLocation(offset).lineNumber;
     mutants.add(Mutant(
       file: file,
-      line: lineInfo.getLocation(offset).lineNumber,
+      line: line,
       offset: offset,
       length: length,
       replacement: replacement,
       operator: operator.id,
+      ignored: pragmas.covers(line, operator),
     ));
   }
 

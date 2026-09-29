@@ -21,7 +21,13 @@ typedef PlannedMutant = ({Mutant mutant, List<String> tests, double risk});
 
 /// The mutants to run, riskiest first, and why others were skipped.
 class MutationPlan {
-  MutationPlan._(this.mutants, this.found, this.withoutTests, this.unparsed);
+  MutationPlan._(
+    this.mutants,
+    this.found,
+    this.withoutTests,
+    this.ignored,
+    this.unparsed,
+  );
 
   /// Plans mutants for the Dart [files] (project-relative) of the project
   /// at [projectRoot]. [lcovPath] enables the coverage filter and CRAP
@@ -39,6 +45,7 @@ class MutationPlan {
     final planned = <PlannedMutant>[];
     var found = 0;
     var withoutTests = 0;
+    var ignored = 0;
     final unparsed = <String>[];
     for (final file in files) {
       final List<Mutant> mutants;
@@ -52,7 +59,14 @@ class MutationPlan {
         continue;
       }
       found += mutants.length;
-      final kept = filter.apply(mutants, methods: methods);
+      ignored += mutants.where((m) => m.ignored).length;
+      final kept = filter.apply(
+        [
+          for (final m in mutants)
+            if (!m.ignored) m
+        ],
+        methods: methods,
+      );
       final tests = selector.testsFor(file, reach: reach);
       if (tests.isEmpty) {
         withoutTests += kept.length;
@@ -69,6 +83,7 @@ class MutationPlan {
       maxMutants == null ? ordered : ordered.take(maxMutants).toList(),
       found,
       withoutTests,
+      ignored,
       unparsed,
     );
   }
@@ -82,6 +97,9 @@ class MutationPlan {
   /// Mutants that passed the filters but have no test file importing
   /// their library.
   final int withoutTests;
+
+  /// Mutants silenced by a `// mutate4dart: ignore` pragma.
+  final int ignored;
 
   /// Files that could not be parsed.
   final List<String> unparsed;

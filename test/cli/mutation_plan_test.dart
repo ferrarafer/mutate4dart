@@ -47,5 +47,29 @@ void main() {
         reason: 'the condition and both returns of ran(); nothing of '
             'never() nor the top-level flag');
     expect(plan.found, 9);
+    expect(plan.ignored, 0);
+  });
+
+  test('drops and counts mutants under an ignore pragma', () {
+    writeFiles(root, {
+      'lib/a.dart': 'bool ran(int a) {\n'
+          '  if (a > 1) { // mutate4dart: ignore relational_boundary\n'
+          '    return true;\n'
+          '  }\n'
+          '  // mutate4dart: ignore\n'
+          '  return false;\n'
+          '}\n',
+    });
+    final plan = MutationPlan.build(
+      projectRoot: root.path,
+      files: ['lib/a.dart'],
+      finder: const MutantFinder(),
+      filter: const MutantFilter(),
+      selector: TestSelector.build(root.path),
+    );
+    expect(plan.ignored, 2);
+    expect(plan.found, 4);
+    expect([for (final m in plan.mutants) m.mutant.operator],
+        ['negate_condition', 'boolean_literal']);
   });
 }

@@ -24,6 +24,15 @@ initializers, `if (x case ...)` conditions, and `+` with a string-literal
 operand. `negate_condition` shall be skipped when the condition (ignoring
 parentheses) is an `==`/`!=` comparison or a `!` expression.
 
+A comment whose text, after the `/` characters, is `mutate4dart: ignore`
+optionally followed by operator ids (separated by commas or spaces) is an
+*ignore pragma*. A pragma with code before it on its line covers that
+line; a pragma alone on its line covers the next line. A mutant whose
+start line is covered, by a pragma without ids or by one naming its
+operator, is *ignored*: it shall not be run, not be listed by `--dry-run`
+and not be scored. The plan summary shall report the number of ignored
+mutants when it is not zero. Unknown ids match nothing.
+
 `collection` swaps the member names `isEmpty` ↔ `isNotEmpty` and
 `first` ↔ `last` in any property access, and `any` ↔ `every` in method
 invocations that have a target. `assignment` also turns `??=` into `=`.

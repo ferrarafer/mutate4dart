@@ -19,7 +19,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.6.0';
+const String mutate4dartVersion = '0.7.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -345,8 +345,11 @@ class Mutate4DartRunner {
   }
 
   void _printPlan(MutationPlan plan) {
+    final ignored =
+        plan.ignored == 0 ? '' : ', ${plan.ignored} ignored by pragma';
     stderr.writeln('${plan.found} mutants found, ${plan.mutants.length} '
-        'to run (${plan.withoutTests} without tests importing their file).');
+        'to run (${plan.withoutTests} without tests importing their file'
+        '$ignored).');
     for (final file in plan.unparsed) {
       stderr.writeln('Skipped $file: it does not parse.');
     }

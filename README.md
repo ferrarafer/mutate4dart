@@ -123,6 +123,22 @@ result would not compile. Promotion is how Dart treats `x` as non-null
 contains a null check or an `is` test (`x == null || x.isEmpty`,
 `o is Foo && o.bar`).
 
+## Ignoring mutants
+
+Some survivors are *equivalent*: the mutant behaves exactly like the
+original, so no test can kill it (`i >= n` → `i == n` in a loop that
+counts up by one). Silence them with a pragma comment:
+
+```dart
+if (i >= n) break; // mutate4dart: ignore
+// mutate4dart: ignore relational_boundary, equality
+final done = index >= items.length;
+```
+
+A trailing pragma covers its own line; a pragma alone on a line covers the
+next line. Without operator ids every operator on that line is ignored.
+Ignored mutants are not run and not scored; the plan summary counts them.
+
 ## Results
 
 - **killed**: a selected test failed. The suite detects the change.
@@ -170,8 +186,9 @@ mutate4dart --format html > mutation-report.html          # open in a browser
   On an 11-core machine, 4 workers were fastest (2.5× over sequential).
   More workers contend for CPU and memory.
 - Some surviving mutants are *equivalent*: they change the code without
-  changing its behaviour, e.g. `i >= n` → `i == n` in a loop that counts
-  up by one. Review survivors before writing tests.
+  changing its behaviour. Review survivors before writing tests, and
+  silence the equivalent ones with a pragma (see [Ignoring
+  mutants](#ignoring-mutants)).
 - Without type information, a few mutants still don't compile (e.g. `*` →
   `/` on `int`s yields a `double`). They are reported as `invalid` and
   excluded from the score.

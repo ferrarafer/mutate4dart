@@ -8,6 +8,7 @@ class Mutant {
     required this.length,
     required this.replacement,
     required this.operator,
+    this.ignored = false,
   });
 
   /// Project-relative path of the mutated file.
@@ -27,6 +28,10 @@ class Mutant {
 
   /// Id of the operator that produced this mutant (see [MutationOperator]).
   final String operator;
+
+  /// Whether a `// mutate4dart: ignore` pragma covers this mutant, so it
+  /// is not run.
+  final bool ignored;
 
   /// Applies this mutant to [source], the unmutated content of [file].
   String apply(String source) =>

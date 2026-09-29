@@ -64,6 +64,32 @@ void main() {
             '`lib/a.dart:1` |'));
     expect(md, contains('1 more method(s) had every mutant detected.'));
     expect(md, contains('<summary>Survivors: changes no test detects (1)'));
-    expect(md, contains('```diff\n- return a + 1;\n+ return a - 1;\n```'));
+    expect(
+        md,
+        contains('```diff\n- return a + 1;\n+ return a - 1;\n```\n'
+            'Tests run: `test/a_test.dart`\n'
+            'Hint: Assert the computed value'));
+    expect(
+        md,
+        contains('Survivors as `file:line`:\n\n```\n'
+            'lib/a.dart:2  arithmetic\n```\n</details>'));
+  });
+
+  test('counts test files past the first five and skips unknown hints', () {
+    final tests = [for (var i = 1; i <= 7; i++) 'test/t${i}_test.dart'];
+    final result = MutantResult(
+      Mutant(
+          file: 'lib/a.dart',
+          line: 2,
+          offset: _source.indexOf('+'),
+          length: 1,
+          replacement: '-',
+          operator: 'custom'),
+      MutantStatus.survived,
+      tests,
+    );
+    final md = render([result]);
+    expect(md, contains('`test/t5_test.dart` and 2 more\n'));
+    expect(md, isNot(contains('Hint:')));
   });
 }

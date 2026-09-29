@@ -102,13 +102,15 @@ unmutated code, `2` mutation score below `--threshold`.
 | `equality` | `==` ↔ `!=` |
 | `logical` | `&&` ↔ `\|\|` |
 | `arithmetic` | `+` ↔ `-`, `*` ↔ `/`, `%` / `~/` → `*` (not string `+`) |
-| `assignment` | `+=` ↔ `-=`, `*=` ↔ `/=` |
+| `assignment` | `+=` ↔ `-=`, `*=` ↔ `/=`, `??=` → `=` |
 | `increment` | `++` ↔ `--` |
 | `boolean_literal` | `true` ↔ `false` |
 | `remove_not` | `!x` → `x` |
 | `negate_condition` | `if` / `while` / `?:` condition `c` → `!(c)` (skipped when `equality` or `remove_not` already yield the same program) |
 | `null_coalescing` | `a ?? b` → `b` |
 | `remove_call` | a call statement whose result is discarded is removed: `repo.save(x);`, `callback();`, `await sync();` → nothing (not `super.…()`, `print`, `debugPrint`, nor the body of an `if` or a loop) |
+
+| `collection` | `isEmpty` ↔ `isNotEmpty`, `first` ↔ `last`, `xs.any(p)` ↔ `xs.every(p)` |
 
 `remove_call` finds side effects no test checks, e.g. a `notifyListeners()`
 or a repository write that the tests never observe. Removing the statement
@@ -145,7 +147,10 @@ mutate4dart --format html > mutation-report.html          # open in a browser
 - `json`: mutate4dart's own per-method document, with CRAP and the test
   files run for each mutant.
 - `markdown`: a score line, a table of the methods with survivors and each
-  survivor as a collapsible `diff`.
+  survivor as a collapsible `diff`, followed by the test files that ran
+  without noticing and a one-line hint on what a test must check to
+  detect that operator. A closing `file:line` block lists the survivors
+  for grepping or for handing to an agent.
 - `stryker`: the [Stryker mutation-testing report
   schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)
   (version 2), accepted by the [Stryker

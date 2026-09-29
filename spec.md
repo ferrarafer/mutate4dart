@@ -24,6 +24,11 @@ initializers, `if (x case ...)` conditions, and `+` with a string-literal
 operand. `negate_condition` shall be skipped when the condition (ignoring
 parentheses) is an `==`/`!=` comparison or a `!` expression.
 
+`collection` swaps the member names `isEmpty` ↔ `isNotEmpty` and
+`first` ↔ `last` in any property access, and `any` ↔ `every` in method
+invocations that have a target. `assignment` also turns `??=` into `=`.
+Every operator carries a one-sentence hint for reports.
+
 `remove_call` removes an expression statement that is a method or
 function invocation, or an `await` of one, and whose parent is a block or
 a `switch` member. Calls on `super` and calls named `print` or
@@ -135,9 +140,13 @@ Score = detected / (detected + survived), N/A when that is zero.
 - Markdown (`--format markdown`): a `## Mutation testing (mutate4dart)`
   heading, then a summary line with the score and the detected, survived
   and invalid counts. Then a table of the methods with survivors (lowest
-  score first), the number of other methods, and the survivors as `diff`
-  blocks inside a `<details>` element. Without mutants it states there was
-  nothing to mutate. Stdout carries only Markdown.
+  score first), the number of other methods, and the survivors inside a
+  `<details>` element: each as a `diff` block, then `Tests run:` with the
+  test files that ran (at most 5 listed, the rest counted) and `Hint:`
+  with the operator's hint (omitted for an unknown operator id), and
+  finally a code block of `<file>:<line>  <operator>` lines. Without
+  mutants it states there was nothing to mutate. Stdout carries only
+  Markdown.
 - Stryker (`--format stryker`): a document of the Stryker mutation-testing
   report schema, `schemaVersion` `2`, `thresholds` `{high: 80, low: 60}`,
   `projectRoot`, `files` keyed by project-relative path with `language`

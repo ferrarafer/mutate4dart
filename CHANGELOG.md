@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0
+
+- New operator `collection`: `isEmpty` ↔ `isNotEmpty`, `first` ↔ `last`
+  and `xs.any(p)` ↔ `xs.every(p)`. Each pair has the same type, so the
+  mutants always compile.
+- `assignment` also turns `a ??= b` into `a = b`.
+- Markdown report: each survivor now lists the test files that ran and a
+  hint on what a test must check to detect that operator, and the
+  survivors are repeated as a `file:line` block at the end.
+- `MutationOperator` carries a `hint` and has a `byId` lookup.
+
 ## 0.5.1
 
 - The coverage filter no longer drops mutants on lines the LCOV file

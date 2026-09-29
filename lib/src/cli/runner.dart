@@ -19,7 +19,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.5.1';
+const String mutate4dartVersion = '0.6.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -326,12 +326,11 @@ class Mutate4DartRunner {
   Set<MutationOperator>? _operators(ArgResults options) {
     final ids = options['operators'] as String?;
     if (ids == null) return null;
-    final byId = {for (final o in MutationOperator.values) o.id: o};
     return {
       for (final id in ids.split(',').map((s) => s.trim()))
-        byId[id] ??
+        MutationOperator.byId(id) ??
             (throw _UsageError('Unknown operator "$id". Known: '
-                '${byId.keys.join(', ')}')),
+                '${MutationOperator.values.map((o) => o.id).join(', ')}')),
     };
   }
 

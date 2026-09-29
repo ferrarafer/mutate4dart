@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../mutation/mutant.dart';
 import '../run/mutation_runner.dart';
 import 'mutation_report.dart';
 
@@ -51,12 +52,19 @@ class MarkdownRenderer {
       ..writeln()
       ..writeln('<details><summary>Survivors: changes no test detects '
           '(${weak.fold(0, (n, m) => n + m.survivors.length)})</summary>\n');
-    for (final m in weak) {
-      for (final r in m.survivors) {
-        out.writeln(_survivor(r));
-      }
+    final survivors = [for (final m in weak) ...m.survivors];
+    for (final r in survivors) {
+      out.writeln(_survivor(r));
     }
-    out.writeln('</details>');
+    out
+      ..writeln('Survivors as `file:line`:\n')
+      ..writeln('```');
+    for (final r in survivors) {
+      out.writeln('${r.mutant.file}:${r.mutant.line}  ${r.mutant.operator}');
+    }
+    out
+      ..writeln('```')
+      ..writeln('</details>');
     return out.toString();
   }
 
@@ -68,13 +76,27 @@ class MarkdownRenderer {
         '${count(MutantStatus.invalid)} invalid.';
   }
 
+  /// Where a test file is listed after this many, the rest are counted.
+  static const int _maxTestsListed = 5;
+
+  /// The survivor's diff, the test files that ran and did not notice, and
+  /// the operator's hint on what a test needs to check.
   String _survivor(MutantResult r) {
     final source = File(p.join(projectRoot, r.mutant.file)).readAsStringSync();
     final index = r.mutant.line - 1;
     final before = source.split('\n')[index].trim();
     final after = r.mutant.apply(source).split('\n')[index].trim();
+    final hint = MutationOperator.byId(r.mutant.operator)?.hint;
     return '`${r.mutant.file}:${r.mutant.line}` ${r.mutant.operator}\n'
-        '```diff\n- $before\n+ $after\n```\n';
+        '```diff\n- $before\n+ $after\n```\n'
+        'Tests run: ${_tests(r.tests)}${hint == null ? '' : '\nHint: $hint'}\n';
+  }
+
+  static String _tests(List<String> tests) {
+    if (tests.isEmpty) return 'none';
+    final listed = tests.take(_maxTestsListed).map((t) => '`$t`').join(', ');
+    final more = tests.length - _maxTestsListed;
+    return more > 0 ? '$listed and $more more' : listed;
   }
 
   static String _pct(double? v) =>

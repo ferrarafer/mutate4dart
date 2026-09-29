@@ -1,8 +1,18 @@
 import 'package:mutate4dart/mutate4dart.dart';
 import 'package:test/test.dart';
 
+/// The mutants of [source] as `line:operator`, without the `collection`
+/// operator: swapping `isEmpty` never touches promotion.
 List<String> _ops(String source) => [
-      for (final m in const MutantFinder().find(source, file: 'lib/a.dart'))
+      for (final m in const MutantFinder(
+        operators: {
+          MutationOperator.equality,
+          MutationOperator.logical,
+          MutationOperator.negateCondition,
+          MutationOperator.relationalBoundary,
+          MutationOperator.removeNot,
+        },
+      ).find(source, file: 'lib/a.dart'))
         '${m.line}:${m.operator}',
     ];
 

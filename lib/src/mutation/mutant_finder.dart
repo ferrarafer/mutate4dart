@@ -45,6 +45,18 @@ const Map<String, String> _assignmentSwaps = {
   '-=': '+=',
   '*=': '/=',
   '/=': '*=',
+  '??=': '=',
+};
+
+/// Member names swapped by the `collection` operator; each pair has the
+/// same type, so the mutant always compiles.
+const Map<String, String> _collectionSwaps = {
+  'isEmpty': 'isNotEmpty',
+  'isNotEmpty': 'isEmpty',
+  'first': 'last',
+  'last': 'first',
+  'any': 'every',
+  'every': 'any',
 };
 
 /// Finds the mutants of a Dart source file by walking its syntax tree.
@@ -188,6 +200,36 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
       (b.operator.lexeme == '==' || b.operator.lexeme == '!=') &&
       (b.leftOperand is NullLiteral || b.rightOperand is NullLiteral);
 
+  /// `xs.isEmpty`, `a.b.first`, `f().last`: a member access on any
+  /// target.
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    _swapMember(node.propertyName);
+    super.visitPropertyAccess(node);
+  }
+
+  /// `xs.isEmpty` where `xs` is a plain identifier parses as a prefixed
+  /// identifier, not a property access.
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    _swapMember(node.identifier);
+    super.visitPrefixedIdentifier(node);
+  }
+
+  /// `xs.any(p)` ↔ `xs.every(p)`; only calls with a target, since a bare
+  /// `any(p)` is the caller's own function.
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target != null) _swapMember(node.methodName);
+    super.visitMethodInvocation(node);
+  }
+
+  void _swapMember(SimpleIdentifier name) {
+    if (_collectionSwaps[name.name] case final to?) {
+      _swapToken(MutationOperator.collection, name.token, to);
+    }
+  }
+
   @override
   void visitAssignmentExpression(AssignmentExpression node) {
     if (_assignmentSwaps[node.operator.lexeme] case final to?) {
@@ -238,26 +280,6 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
     super.visitExpressionStatement(node);
   }
 
-  /// A call whose result is discarded, directly in a block or a `case`
-  /// body: `save(x);`, `a.b(c);`, `callback();`, `await sync();`. Not
-  /// mutated: calls on `super` (the analyzer already enforces them) and
-  /// `print` / `debugPrint` (removing logging is noise, not a bug). A
-  /// statement that is the body of an `if` or a loop is kept, because
-  /// removing it would make the next statement the body.
-  static bool _isRemovableCall(ExpressionStatement node) {
-    if (node.parent is! Block && node.parent is! SwitchMember) return false;
-    var e = node.expression;
-    if (e is AwaitExpression) e = e.expression;
-    return switch (e) {
-      MethodInvocation(:final target, :final methodName) =>
-        target is! SuperExpression && !_logging.contains(methodName.name),
-      FunctionExpressionInvocation() => true,
-      _ => false,
-    };
-  }
-
-  static const Set<String> _logging = {'print', 'debugPrint'};
-
   @override
   void visitBooleanLiteral(BooleanLiteral node) {
     _swapToken(
@@ -286,9 +308,29 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
   }
 
   String _text(AstNode node) => source.substring(node.offset, node.end);
-
-  static String _flipIncrement(String lexeme) => lexeme == '++' ? '--' : '++';
-
-  static bool _isStringConcatenation(BinaryExpression node) =>
-      node.leftOperand is StringLiteral || node.rightOperand is StringLiteral;
 }
+
+/// A call whose result is discarded, directly in a block or a `case`
+/// body: `save(x);`, `a.b(c);`, `callback();`, `await sync();`. Not
+/// mutated: calls on `super` (the analyzer already enforces them) and
+/// `print` / `debugPrint` (removing logging is noise, not a bug). A
+/// statement that is the body of an `if` or a loop is kept, because
+/// removing it would make the next statement the body.
+bool _isRemovableCall(ExpressionStatement node) {
+  if (node.parent is! Block && node.parent is! SwitchMember) return false;
+  var e = node.expression;
+  if (e is AwaitExpression) e = e.expression;
+  return switch (e) {
+    MethodInvocation(:final target, :final methodName) =>
+      target is! SuperExpression && !_logging.contains(methodName.name),
+    FunctionExpressionInvocation() => true,
+    _ => false,
+  };
+}
+
+const Set<String> _logging = {'print', 'debugPrint'};
+
+String _flipIncrement(String lexeme) => lexeme == '++' ? '--' : '++';
+
+bool _isStringConcatenation(BinaryExpression node) =>
+    node.leftOperand is StringLiteral || node.rightOperand is StringLiteral;

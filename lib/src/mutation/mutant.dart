@@ -42,41 +42,100 @@ class Mutant {
 /// The mutation operators mutate4dart applies.
 enum MutationOperator {
   /// `<` ↔ `<=`, `>` ↔ `>=`: off-by-one boundaries.
-  relationalBoundary('relational_boundary'),
+  relationalBoundary(
+    'relational_boundary',
+    'Assert the result for the boundary value itself, where `<` and `<=` '
+        '(or `>` and `>=`) differ.',
+  ),
 
   /// `==` ↔ `!=`.
-  equality('equality'),
+  equality(
+    'equality',
+    'Add a case where the compared values are equal and one where they '
+        'differ, and assert the outcome of each.',
+  ),
 
   /// `&&` ↔ `||`.
-  logical('logical'),
+  logical(
+    'logical',
+    'Cover an input where exactly one operand is true; `&&` and `||` '
+        'agree on every other input.',
+  ),
 
   /// `+` ↔ `-`, `*` ↔ `/`, `%` → `*`, `~/` → `*`.
-  arithmetic('arithmetic'),
+  arithmetic(
+    'arithmetic',
+    'Assert the computed value with operands where the swapped operator '
+        'gives a different result (avoid 0, 1 and 2).',
+  ),
 
-  /// `+=` ↔ `-=`, `*=` ↔ `/=`.
-  assignment('assignment'),
+  /// `+=` ↔ `-=`, `*=` ↔ `/=`, `??=` → `=`.
+  assignment(
+    'assignment',
+    'Assert the value after the update; for `??=`, update a variable that '
+        'already has a value and check it is kept.',
+  ),
 
   /// `++` ↔ `--` (prefix and postfix).
-  increment('increment'),
+  increment(
+    'increment',
+    'Assert the counter after the step.',
+  ),
 
   /// `true` ↔ `false`.
-  booleanLiteral('boolean_literal'),
+  booleanLiteral(
+    'boolean_literal',
+    'Assert the boolean this branch returns or stores.',
+  ),
 
   /// `!x` → `x`.
-  removeNot('remove_not'),
+  removeNot(
+    'remove_not',
+    'Add a case where the negated expression is true and one where it is '
+        'false, and assert the outcome of each.',
+  ),
 
   /// `if (c)` / `while (c)` / `c ? a : b` → `!(c)`.
-  negateCondition('negate_condition'),
+  negateCondition(
+    'negate_condition',
+    'Cover both outcomes of this condition and assert what each one does.',
+  ),
 
   /// `a ?? b` → `b` (the fallback is always used).
-  nullCoalescing('null_coalescing'),
+  nullCoalescing(
+    'null_coalescing',
+    'Test with a non-null left operand whose value differs from the '
+        'fallback, and assert that value is used.',
+  ),
 
   /// A call statement whose result is discarded is removed:
   /// `save(x);` → nothing. Tests that never check the side effect miss it.
-  removeCall('remove_call');
+  removeCall(
+    'remove_call',
+    'Assert the side effect of this call: the resulting state, an '
+        'interaction on a mock or an emitted event.',
+  ),
 
-  const MutationOperator(this.id);
+  /// `isEmpty` ↔ `isNotEmpty`, `first` ↔ `last`, `any` ↔ `every`.
+  collection(
+    'collection',
+    'Test with an empty and a non-empty collection, or one whose first '
+        'and last elements differ, and assert the result.',
+  );
+
+  const MutationOperator(this.id, this.hint);
 
   /// Stable id used in reports and `--operators`.
   final String id;
+
+  /// One sentence on what a test needs to detect this mutation.
+  final String hint;
+
+  /// The operator with [id], or `null`.
+  static MutationOperator? byId(String id) {
+    for (final operator in values) {
+      if (operator.id == id) return operator;
+    }
+    return null;
+  }
 }

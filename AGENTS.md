@@ -33,6 +33,7 @@ crap4dart analyze            # max CRAP must stay <= 8.0
 bin/mutate4dart.dart          # entry point -> Mutate4DartRunner
 lib/src/cli/runner.dart       # flags, orchestration, exit codes
 lib/src/cli/mutation_plan.dart# find -> filter -> select tests -> order by CRAP
+lib/src/cli/config_file.dart  # mutate4dart.yaml -> arguments before the CLI's
 lib/src/mutation/             # Mutant model, operators, AST MutantFinder
 lib/src/selection/            # coverage/diff filters, import-graph TestSelector
 lib/src/run/                  # TestCommand, ProcessRunner, MutationRunner (in place),

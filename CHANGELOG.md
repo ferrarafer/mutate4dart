@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- Config file: `mutate4dart.yaml` at the project root, or `--config
+  <file>`, holds option defaults with snake_case keys (`max_mutants: 200`,
+  `exclude: [...]`, `paths: [...]`). The command line wins; `exclude`
+  globs from both add up; `paths` applies when the command line has
+  none. Unknown keys and bad values exit 1.
+- `--collect-coverage` and `--diff` are negatable (`--no-collect-coverage`,
+  `--no-diff`), so the command line can turn off a config file's `true`.
+
 ## 0.8.0
 
 - `--exclude <glob>` (repeatable) skips files whose project-relative path

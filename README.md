@@ -82,8 +82,8 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--exclude <glob>` | | Skip project-relative files matching the glob, e.g. `'lib/l10n/**'` (repeatable) |
 | `--lcov` | `coverage/lcov.info` | Coverage used to skip lines no test executes |
 | `--[no-]coverage` | on | Turn the coverage filter off |
-| `--collect-coverage` | | Flutter: run only the tests that import the target files, with coverage, into `.mutate4dart/lcov.info` (no full-suite coverage needed) |
-| `--diff` / `--diff-base <ref>` | | Only mutate lines changed since `HEAD` / `<ref>` |
+| `--[no-]collect-coverage` | off | Flutter: run only the tests that import the target files, with coverage, into `.mutate4dart/lcov.info` (no full-suite coverage needed) |
+| `--[no-]diff` / `--diff-base <ref>` | | Only mutate lines changed since `HEAD` / `<ref>` |
 | `--test-command` | detected | Test command; test files are appended |
 | `--reach` | `direct` | `transitive` also runs tests that reach the file through other libraries |
 | `--operators` | all | Comma-separated operator ids (see below) |
@@ -94,9 +94,34 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--min-timeout S` | `30` | Seconds a mutant's tests may always run before it counts as a timeout |
 | `--timeout-factor F` | `3` | A mutant's tests may run F× their unmutated duration (at least `--min-timeout`) |
 | `--dry-run` | | Plan only, nothing is run |
+| `--config <file>` | `mutate4dart.yaml` | Config file with defaults for these options |
 
 Exit codes: `0` success, `1` usage/configuration error or tests failing on
 unmutated code, `2` mutation score below `--threshold`.
+
+### Configuration file
+
+`mutate4dart.yaml` at the project root (or `--config <file>`) holds
+defaults for the options above, one snake_case key per option, so CI and
+local runs share them:
+
+```yaml
+paths: [lib/services]
+exclude:
+  - 'lib/l10n/**'
+  - 'lib/**/*_view.dart'
+operators: [arithmetic, relational_boundary, negate_condition]
+threshold: 80
+max_mutants: 200
+timeout_factor: 2
+collect_coverage: true
+```
+
+Options given on the command line win over the file (`--no-<flag>` turns
+a flag off). `exclude` globs
+from both add up, and `paths` applies only when the command line names
+none. Unknown keys and wrong value types are configuration errors
+(exit `1`).
 
 ## Operators
 

@@ -17,10 +17,11 @@ import '../run/parallel_runner.dart';
 import '../run/test_command.dart';
 import '../selection/mutant_filters.dart';
 import '../selection/test_selector.dart';
+import 'config_file.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.8.0';
+const String mutate4dartVersion = '0.9.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -55,18 +56,20 @@ class Mutate4DartRunner {
   static final ArgParser _parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.')
     ..addFlag('version', negatable: false, help: 'Print the version.')
+    ..addOption('config',
+        defaultsTo: defaultConfigPath,
+        help: 'Config file with defaults for these options (snake_case '
+            'keys); flags given here win.')
     ..addOption('lcov',
         defaultsTo: 'coverage/lcov.info',
         help: 'LCOV file: only covered lines are mutated.')
     ..addFlag('coverage',
         defaultsTo: true, help: 'Skip mutants on lines no test executes.')
     ..addFlag('collect-coverage',
-        negatable: false,
         help: 'Collect coverage by running only the tests that import the '
             'target files, into $collectedLcovPath (Flutter projects), '
             'instead of reading --lcov.')
-    ..addFlag('diff',
-        negatable: false, help: 'Only mutate lines changed since HEAD.')
+    ..addFlag('diff', help: 'Only mutate lines changed since HEAD.')
     ..addOption('diff-base',
         help: 'Only mutate lines changed since this git ref.')
     ..addOption('test-command',
@@ -130,9 +133,34 @@ class Mutate4DartRunner {
       return ExitCodes.success;
     }
     try {
-      return await _mutate(options);
+      return await _mutate(_withConfig(args, options));
     } on _UsageError catch (e) {
       return _usageError(e.message);
+    }
+  }
+
+  /// Re-parses [args] after the arguments of the config file, so the
+  /// command line wins.
+  ArgResults _withConfig(List<String> args, ArgResults options) {
+    final ConfigFile config;
+    try {
+      config = ConfigFile.load(
+        projectRoot ?? Directory.current.path,
+        options['config'] as String,
+        _parser,
+        required: options.wasParsed('config'),
+      );
+    } on ConfigFileException catch (e) {
+      throw _UsageError(e.message);
+    }
+    try {
+      return _parser.parse([
+        ...config.arguments,
+        ...args,
+        if (options.rest.isEmpty) ...config.paths,
+      ]);
+    } on FormatException catch (e) {
+      throw _UsageError('${options['config']}: ${e.message}');
     }
   }
 

@@ -178,7 +178,27 @@ Score = detected / (detected + survived), N/A when that is zero.
   a CDN and assigning the Stryker document to its `report` property, with
   `<` in the JSON written as its JSON unicode escape (backslash `u003c`). Stdout carries only HTML.
 
-## 9. Exit codes
+## 9. Configuration file
+
+`--config <file>` (default `mutate4dart.yaml`, relative to the project
+root) names a YAML map of option defaults. A missing default file is
+ignored; a missing file named with `--config` is an error.
+
+- Each key is a long option name with `_` for `-` (`max_mutants`), except
+  `help`, `version` and `config`. `paths` lists the files or directories
+  to mutate.
+- A flag takes a bool: `true` sets it, `false` sets `--no-<flag>` when the
+  flag is negatable and is ignored otherwise.
+- An option takes a scalar or a list of scalars. A list is joined with
+  commas (`operators`), except for repeatable options (`exclude`), where
+  each item is one occurrence.
+- The entries shall behave as arguments placed before the command line's:
+  an option given on the command line wins, repeatable options add up.
+  `paths` applies only when the command line has no paths.
+- Invalid YAML, a non-map document, an unknown key or a value of the wrong
+  type or range shall be a usage error (exit 1) naming the file.
+
+## 10. Exit codes
 
 - `0`: success (including `--dry-run`, `--help`, `--version`).
 - `1`: usage or configuration error, git failure, red baseline.

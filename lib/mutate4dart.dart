@@ -4,6 +4,7 @@
 /// reports a mutation score per method next to its CRAP score.
 library;
 
+export 'src/cli/config_file.dart';
 export 'src/cli/mutation_plan.dart';
 export 'src/cli/runner.dart';
 export 'src/mutation/mutant.dart';

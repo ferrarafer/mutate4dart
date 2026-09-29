@@ -40,9 +40,11 @@ class MarkdownRenderer {
       ..writeln('| Score | Survived | CRAP | CC | Method | Location |')
       ..writeln('|---:|---:|---:|---:|---|---|');
     for (final m in weak) {
-      out.writeln('| ${_pct(m.score)} | ${m.survivors.length} | '
-          '${m.crap?.toStringAsFixed(1) ?? 'N/A'} | ${m.complexity ?? '-'} | '
-          '`${m.name}` | `${m.file}:${m.line}` |');
+      out.writeln(
+        '| ${_pct(m.score)} | ${m.survivors.length} | '
+        '${m.crap?.toStringAsFixed(1) ?? 'N/A'} | ${m.complexity ?? '-'} | '
+        '`${m.name}` | `${m.file}:${m.line}` |',
+      );
     }
     final fullyTested = report.methods.length - weak.length;
     if (fullyTested > 0) {
@@ -50,8 +52,10 @@ class MarkdownRenderer {
     }
     out
       ..writeln()
-      ..writeln('<details><summary>Survivors: changes no test detects '
-          '(${weak.fold(0, (n, m) => n + m.survivors.length)})</summary>\n');
+      ..writeln(
+        '<details><summary>Survivors: changes no test detects '
+        '(${weak.fold(0, (n, m) => n + m.survivors.length)})</summary>\n',
+      );
     final survivors = [for (final m in weak) ...m.survivors];
     for (final r in survivors) {
       out.writeln(_survivor(r));

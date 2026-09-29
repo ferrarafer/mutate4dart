@@ -2,7 +2,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
-import 'package:crap4dart/crap4dart.dart';
+import 'package:crap_dart/crap_dart.dart';
 
 import 'mutant.dart';
 
@@ -106,9 +106,11 @@ class _IgnorePragmas {
     String source,
   ) {
     final byLine = <int, Set<String>>{};
-    for (Token? token = unit.beginToken;
-        token != null;
-        token = token.type == TokenType.EOF ? null : token.next) {
+    for (
+      Token? token = unit.beginToken;
+      token != null;
+      token = token.type == TokenType.EOF ? null : token.next
+    ) {
       for (Token? c = token.precedingComments; c != null; c = c.next) {
         final ids = _parse(c.lexeme);
         if (ids == null) continue;
@@ -144,12 +146,14 @@ class _IgnorePragmas {
     }
     text = text.trim();
     if (!text.startsWith(_prefix)) return null;
-    final words =
-        text.substring(_prefix.length).trim().split(RegExp(r'[,\s]+'));
+    final words = text
+        .substring(_prefix.length)
+        .trim()
+        .split(RegExp(r'[,\s]+'));
     if (words.first != 'ignore') return null;
     return {
       for (final id in words.skip(1))
-        if (id.isNotEmpty) id
+        if (id.isNotEmpty) id,
     };
   }
 
@@ -184,15 +188,17 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
   ) {
     if (!enabled.contains(operator)) return;
     final line = lineInfo.getLocation(offset).lineNumber;
-    mutants.add(Mutant(
-      file: file,
-      line: line,
-      offset: offset,
-      length: length,
-      replacement: replacement,
-      operator: operator.id,
-      ignored: pragmas.covers(line, operator),
-    ));
+    mutants.add(
+      Mutant(
+        file: file,
+        line: line,
+        offset: offset,
+        length: length,
+        replacement: replacement,
+        operator: operator.id,
+        ignored: pragmas.covers(line, operator),
+      ),
+    );
   }
 
   void _swapToken(MutationOperator operator, Token token, String to) =>
@@ -262,20 +268,16 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
   /// `is` test: Dart promotes the tested variable after it, so changing
   /// the logic around it makes later uses fail to compile.
   static bool _promotes(Expression e) => switch (e.unParenthesized) {
-        IsExpression() => true,
-        final BinaryExpression b when _isNullCheck(b) => true,
-        BinaryExpression(
-          :final operator,
-          :final leftOperand,
-          :final rightOperand
-        )
-            when operator.lexeme == '&&' || operator.lexeme == '||' =>
-          _promotes(leftOperand) || _promotes(rightOperand),
-        PrefixExpression(:final operator, :final operand)
-            when operator.lexeme == '!' =>
-          _promotes(operand),
-        _ => false,
-      };
+    IsExpression() => true,
+    final BinaryExpression b when _isNullCheck(b) => true,
+    BinaryExpression(:final operator, :final leftOperand, :final rightOperand)
+        when operator.lexeme == '&&' || operator.lexeme == '||' =>
+      _promotes(leftOperand) || _promotes(rightOperand),
+    PrefixExpression(:final operator, :final operand)
+        when operator.lexeme == '!' =>
+      _promotes(operand),
+    _ => false,
+  };
 
   /// `x == null` or `x != null` (either side).
   static bool _isNullCheck(BinaryExpression b) =>
@@ -332,7 +334,10 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
       );
     } else if (lexeme == '++' || lexeme == '--') {
       _swapToken(
-          MutationOperator.increment, node.operator, _flipIncrement(lexeme));
+        MutationOperator.increment,
+        node.operator,
+        _flipIncrement(lexeme),
+      );
     }
     super.visitPrefixExpression(node);
   }
@@ -342,7 +347,10 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
     final lexeme = node.operator.lexeme;
     if (lexeme == '++' || lexeme == '--') {
       _swapToken(
-          MutationOperator.increment, node.operator, _flipIncrement(lexeme));
+        MutationOperator.increment,
+        node.operator,
+        _flipIncrement(lexeme),
+      );
     }
     super.visitPostfixExpression(node);
   }
@@ -425,6 +433,6 @@ const Set<String> _performanceHints = {'growable'};
 /// Whether [node] is the value of a performance-only named argument.
 bool _isPerformanceHint(BooleanLiteral node) {
   final parent = node.parent;
-  return parent is NamedExpression &&
-      _performanceHints.contains(parent.name.label.name);
+  return parent is NamedArgument &&
+      _performanceHints.contains(parent.name.lexeme);
 }

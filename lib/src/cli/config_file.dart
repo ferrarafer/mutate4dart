@@ -104,8 +104,10 @@ class ConfigFile {
   static List<String> _strings(String path, String key, Object? value) {
     final items = value is YamlList ? value.toList() : [value];
     if (items.isEmpty || items.any((v) => v == null || v is Map || v is List)) {
-      throw ConfigFileException('$path: $key must be a value or a list of '
-          'values.');
+      throw ConfigFileException(
+        '$path: $key must be a value or a list of '
+        'values.',
+      );
     }
     return [for (final v in items) '$v'];
   }

@@ -1,23 +1,17 @@
 /// Mutation testing for Dart and Flutter projects.
 ///
-/// Mutates covered code, runs only the test files that import it, and
-/// reports a mutation score per method next to its CRAP score.
+/// mutate4dart is a command-line tool (`dart pub global activate
+/// mutate4dart`). This library runs the same command in-process:
+///
+/// ```dart
+/// final exitCode = await Mutate4DartRunner().execute(['--diff']);
+/// ```
+///
+/// See the README for the options, operators and report formats. The
+/// JSON, Stryker and JUnit reports are the stable way to consume results.
 library;
 
-export 'src/cli/config_file.dart';
-export 'src/cli/mutation_plan.dart';
-export 'src/cli/runner.dart';
-export 'src/mutation/mutant.dart';
-export 'src/mutation/mutant_finder.dart';
-export 'src/report/junit_renderer.dart';
-export 'src/report/markdown_renderer.dart';
-export 'src/report/mutation_report.dart';
-export 'src/report/stryker_renderer.dart';
-export 'src/run/coverage_collector.dart';
-export 'src/run/mutation_runner.dart';
-export 'src/run/parallel_runner.dart';
-export 'src/run/shadow_workspace.dart';
-export 'src/run/test_command.dart';
-export 'src/selection/mutant_filters.dart';
-export 'src/selection/mutant_sample.dart';
-export 'src/selection/test_selector.dart';
+export 'src/cli/runner.dart'
+    show ExitCodes, Mutate4DartRunner, defaultJobs, mutate4dartVersion;
+export 'src/run/test_command.dart'
+    show CommandResult, ProcessRunner, runProcess;

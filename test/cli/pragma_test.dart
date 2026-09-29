@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
@@ -12,7 +12,8 @@ void main() {
   setUp(() {
     root = createCalcProject();
     writeFiles(root, {
-      'lib/calc.dart': 'int add(int a, int b) {\n'
+      'lib/calc.dart':
+          'int add(int a, int b) {\n'
           '  if (a > 0) return a + b; // mutate4dart: ignore arithmetic\n'
           '  return b - 1;\n'
           '}\n',
@@ -24,9 +25,12 @@ void main() {
     final run = await runCli(root, ['--dry-run']);
     expect(run.exitCode, ExitCodes.success);
     expect(
-        run.stderr,
-        contains('to run (1 without tests importing their file, 1 ignored '
-            'by pragma).'));
+      run.stderr,
+      contains(
+        'to run (1 without tests importing their file, 1 ignored '
+        'by pragma).',
+      ),
+    );
     expect(run.stdout, isNot(contains('[arithmetic]')));
     expect(run.stdout, contains('[relational_boundary]'));
   });

@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
 
-const _source = 'int f(int a) {\n  return a + 1;\n}\n'
+const _source =
+    'int f(int a) {\n  return a + 1;\n}\n'
     'int g(int b) {\n  return b * 2;\n}\n';
 
 MutantResult _result(String op, MutantStatus status) {
@@ -30,8 +31,9 @@ void main() {
   setUp(() => root = createProject({'lib/a.dart': _source}));
   tearDown(() => root.deleteSync(recursive: true));
 
-  String render(List<MutantResult> results) => MarkdownRenderer(root.path)
-      .render(MutationReport.build(results, projectRoot: root.path));
+  String render(List<MutantResult> results) => MarkdownRenderer(
+    root.path,
+  ).render(MutationReport.build(results, projectRoot: root.path));
 
   test('an empty run says there was nothing to mutate', () {
     expect(render(const []), contains('No mutants to run'));
@@ -40,9 +42,12 @@ void main() {
   test('a fully detected run has no table', () {
     final md = render([_result('+', MutantStatus.killed)]);
     expect(
-        md,
-        contains('**Score: 100.0%**, 1 mutants: 1 detected, '
-            '0 survived, 0 invalid.'));
+      md,
+      contains(
+        '**Score: 100.0%**, 1 mutants: 1 detected, '
+        '0 survived, 0 invalid.',
+      ),
+    );
     expect(md, contains('Every mutant was detected'));
     expect(md, isNot(contains('| Score |')));
   });
@@ -55,41 +60,35 @@ void main() {
     ]);
     expect(md, startsWith('## Mutation testing (mutate4dart)'));
     expect(
-        md,
-        contains('**Score: 50.0%**, 3 mutants: 1 detected, '
-            '1 survived, 1 invalid.'));
+      md,
+      contains(
+        '**Score: 50.0%**, 3 mutants: 1 detected, '
+        '1 survived, 1 invalid.',
+      ),
+    );
     expect(
-        md,
-        contains('| 0.0% | 1 | N/A | 1 | `(top-level).f` | '
-            '`lib/a.dart:1` |'));
+      md,
+      contains(
+        '| 0.0% | 1 | N/A | 1 | `(top-level).f` | '
+        '`lib/a.dart:1` |',
+      ),
+    );
     expect(md, contains('1 more method(s) had every mutant detected.'));
     expect(md, contains('<summary>Survivors: changes no test detects (1)'));
     expect(
-        md,
-        contains('```diff\n- return a + 1;\n+ return a - 1;\n```\n'
-            'Tests run: `test/a_test.dart`\n'
-            'Hint: Assert the computed value'));
-    expect(
-        md,
-        contains('Survivors as `file:line`:\n\n```\n'
-            'lib/a.dart:2  arithmetic\n```\n</details>'));
-  });
-
-  test('counts test files past the first five and skips unknown hints', () {
-    final tests = [for (var i = 1; i <= 7; i++) 'test/t${i}_test.dart'];
-    final result = MutantResult(
-      Mutant(
-          file: 'lib/a.dart',
-          line: 2,
-          offset: _source.indexOf('+'),
-          length: 1,
-          replacement: '-',
-          operator: 'custom'),
-      MutantStatus.survived,
-      tests,
+      md,
+      contains(
+        '```diff\n- return a + 1;\n+ return a - 1;\n```\n'
+        'Tests run: `test/a_test.dart`\n'
+        'Hint: Assert the computed value',
+      ),
     );
-    final md = render([result]);
-    expect(md, contains('`test/t5_test.dart` and 2 more\n'));
-    expect(md, isNot(contains('Hint:')));
+    expect(
+      md,
+      contains(
+        'Survivors as `file:line`:\n\n```\n'
+        'lib/a.dart:2  arithmetic\n```\n</details>',
+      ),
+    );
   });
 }

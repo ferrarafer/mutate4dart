@@ -22,7 +22,8 @@ class StrykerRenderer {
   final String projectRoot;
 
   /// CDN URL of the viewer used by [html].
-  static const String viewerUrl = 'https://cdn.jsdelivr.net/npm/'
+  static const String viewerUrl =
+      'https://cdn.jsdelivr.net/npm/'
       'mutation-testing-elements@3/dist/mutation-test-elements.js';
 
   static const Map<MutantStatus, String> _status = {
@@ -41,7 +42,11 @@ class StrykerRenderer {
   String html(MutationReport report) {
     // `<` is written as its JSON escape (backslash, `u003c`) so that a
     // `</script>` inside a source file cannot end the script block.
-    final data = jsonEncode(toMap(report)).replaceAll('<', r'\u' '003c');
+    final data = jsonEncode(toMap(report)).replaceAll(
+      '<',
+      r'\u'
+          '003c',
+    );
     return '<!DOCTYPE html>\n'
         '<html lang="en">\n'
         '<head>\n'
@@ -114,19 +119,18 @@ class StrykerRenderer {
     MutantResult r,
     LineInfo lines,
     String id,
-  ) =>
-      {
-        'id': id,
-        'mutatorName': r.mutant.operator,
-        'replacement': r.mutant.replacement,
-        'location': {
-          'start': _position(lines, r.mutant.offset),
-          'end': _position(lines, r.mutant.offset + r.mutant.length),
-        },
-        'status': _status[r.status],
-        'coveredBy': r.tests,
-        if (r.detected && r.tests.length == 1) 'killedBy': r.tests,
-      };
+  ) => {
+    'id': id,
+    'mutatorName': r.mutant.operator,
+    'replacement': r.mutant.replacement,
+    'location': {
+      'start': _position(lines, r.mutant.offset),
+      'end': _position(lines, r.mutant.offset + r.mutant.length),
+    },
+    'status': _status[r.status],
+    'coveredBy': r.tests,
+    if (r.detected && r.tests.length == 1) 'killedBy': r.tests,
+  };
 
   static Map<String, int> _position(LineInfo lines, int offset) {
     final location = lines.getLocation(offset);

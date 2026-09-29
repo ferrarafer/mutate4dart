@@ -48,10 +48,11 @@ class TestSelector {
         }
       }
     }
-    final tests = imports.keys
-        .where((f) => p.isWithin('test', f) && f.endsWith('_test.dart'))
-        .toList()
-      ..sort();
+    final tests =
+        imports.keys
+            .where((f) => p.isWithin('test', f) && f.endsWith('_test.dart'))
+            .toList()
+          ..sort();
     return TestSelector._(imports, exports, partOwner, tests);
   }
 
@@ -103,9 +104,9 @@ class TestSelector {
   }
 
   static String? _uriOf(Directive directive) => switch (directive) {
-        UriBasedDirective(:final uri) => uri.stringValue,
-        _ => null,
-      };
+    UriBasedDirective(:final uri) => uri.stringValue,
+    _ => null,
+  };
 
   static String? _resolve(String uri, String from, String? package) {
     if (package != null && uri.startsWith('package:$package/')) {

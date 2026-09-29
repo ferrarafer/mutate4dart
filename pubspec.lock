@@ -5,18 +5,18 @@ packages:
     dependency: transitive
     description:
       name: _fe_analyzer_shared
-      sha256: da0d9209ca76bde579f2da330aeb9df62b6319c834fa7baae052021b0462401f
+      sha256: fdcd9f70f9eb80df3bc5ed0fa67280df2595fd481948df8a9ab082e6a40ad04b
       url: "https://pub.dev"
     source: hosted
-    version: "85.0.0"
+    version: "108.0.0"
   analyzer:
     dependency: "direct main"
     description:
       name: analyzer
-      sha256: "974859dc0ff5f37bc4313244b3218c791810d03ab3470a579580279ba971a48d"
+      sha256: a51c769bff3b6dfbe9d60199b8606d808290702a296bef0c26a4ca391d414e46
       url: "https://pub.dev"
     source: hosted
-    version: "7.7.1"
+    version: "14.4.0"
   archive:
     dependency: transitive
     description:
@@ -81,15 +81,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.1"
-  crap4dart:
+  crap_dart:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.12.2"
-      resolved-ref: "78c4b88f4e0a645f0217762441e7e8da5dd34d55"
-      url: "https://github.com/ferrarafer/crap4dart.git"
+      ref: "v0.13.0"
+      resolved-ref: bf19a67550bbe0521127c8e1a640159b9a2c6614
+      url: "https://github.com/ferrarafer/crap_dart.git"
     source: git
-    version: "0.12.2"
+    version: "0.13.0"
   crypto:
     dependency: transitive
     description:
@@ -162,22 +162,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-  js:
-    dependency: transitive
-    description:
-      name: js
-      sha256: "53385261521cc4a0c4658fd0ad07a7d14591cf8fc33abbceae306ddb974888dc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.2"
   lints:
     dependency: "direct dev"
     description:
       name: lints
-      sha256: c35bb79562d980e9a453fc715854e1ed39e24e7d0297a880ef54e17f9874a9d7
+      sha256: "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.1"
+    version: "6.1.0"
   logging:
     dependency: transitive
     description:
@@ -358,26 +350,26 @@ packages:
     dependency: "direct dev"
     description:
       name: test
-      sha256: "75906bf273541b676716d1ca7627a17e4c4070a3a16272b7a3dc7da3b9f3f6b7"
+      sha256: de5d145b0afff7921e5e788a880f52d7e5f3ae24068a202f6fd3b58e4ba26323
       url: "https://pub.dev"
     source: hosted
-    version: "1.26.3"
+    version: "1.32.0"
   test_api:
     dependency: transitive
     description:
       name: test_api
-      sha256: ab2726c1a94d3176a45960b6234466ec367179b87dd74f1611adb1f3b5fb9d55
+      sha256: "0a10344e901e5b2e63819567951cb6a06673ed6b84f40462188ff5a0c41f371f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.7"
+    version: "0.7.14"
   test_core:
     dependency: transitive
     description:
       name: test_core
-      sha256: "0cc24b5ff94b38d2ae73e1eb43cc302b77964fbf67abad1e296025b78deb53d0"
+      sha256: "80f3fb49087454e07e7e07c67578cfdd156c8c3a5227d8b3f47c7b2d019c2e93"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.12"
+    version: "0.6.20"
   typed_data:
     dependency: transitive
     description:

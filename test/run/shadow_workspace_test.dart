@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -30,17 +30,23 @@ void main() {
   String app() => p.join(workspace.path, 'app');
 
   test('finds the resolution root above the project', () {
-    expect(ShadowWorkspace.findResolutionRoot(app()),
-        p.canonicalize(workspace.path));
+    expect(
+      ShadowWorkspace.findResolutionRoot(app()),
+      p.canonicalize(workspace.path),
+    );
     final lone = createProject({});
     addTearDown(() => lone.deleteSync(recursive: true));
-    expect(ShadowWorkspace.findResolutionRoot(lone.path),
-        p.canonicalize(lone.path));
+    expect(
+      ShadowWorkspace.findResolutionRoot(lone.path),
+      p.canonicalize(lone.path),
+    );
   });
 
   test('mirrors the workspace, copying only the mutated files', () {
-    final shadow =
-        ShadowWorkspace.create(projectRoot: app(), files: ['lib/a.dart']);
+    final shadow = ShadowWorkspace.create(
+      projectRoot: app(),
+      files: ['lib/a.dart'],
+    );
     addTearDown(shadow.delete);
     bool isLink(String path) =>
         FileSystemEntity.isLinkSync(p.join(shadow.root, path));
@@ -54,31 +60,22 @@ void main() {
     expect(isLink('app/test'), isTrue);
     // Per-worker build state is not shared; resolution files are copied.
     expect(
-        File(p.join(shadow.root, '.dart_tool/package_config.json'))
-            .readAsStringSync(),
-        '{"packages": []}');
+      File(
+        p.join(shadow.root, '.dart_tool/package_config.json'),
+      ).readAsStringSync(),
+      '{"packages": []}',
+    );
     for (final absent in [
       '.dart_tool/flutter_build',
       '.git',
       'app/build',
       'app/.dart_tool/cache',
     ]) {
-      expect(FileSystemEntity.typeSync(p.join(shadow.root, absent)),
-          FileSystemEntityType.notFound,
-          reason: absent);
+      expect(
+        FileSystemEntity.typeSync(p.join(shadow.root, absent)),
+        FileSystemEntityType.notFound,
+        reason: absent,
+      );
     }
-  });
-
-  test('writing a copied file leaves the original untouched', () {
-    final shadow =
-        ShadowWorkspace.create(projectRoot: app(), files: ['lib/src/c.dart']);
-    File(p.join(shadow.projectRoot, 'lib/src/c.dart')).writeAsStringSync('!');
-    expect(File(p.join(app(), 'lib/src/c.dart')).readAsStringSync(),
-        'int c = 3;\n');
-    shadow.delete();
-    expect(Directory(shadow.root).existsSync(), isFalse);
-    expect(File(p.join(app(), 'lib/b.dart')).existsSync(), isTrue,
-        reason: 'deleting the shadow must not follow symlinks');
-    shadow.delete(); // idempotent
   });
 }

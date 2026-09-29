@@ -160,11 +160,11 @@ class MutationRunner {
       timeout.forBaseline(_baselines[tests.join('\n')] ?? Duration.zero);
 
   Future<CommandResult> _runTests(List<String> tests, Duration limit) => run(
-        command.executable,
-        command.argumentsFor(tests),
-        workingDirectory: projectRoot,
-        timeout: limit,
-      );
+    command.executable,
+    command.argumentsFor(tests),
+    workingDirectory: projectRoot,
+    timeout: limit,
+  );
 
   static MutantStatus _statusOf(CommandResult result) {
     if (result.timedOut) return MutantStatus.timeout;

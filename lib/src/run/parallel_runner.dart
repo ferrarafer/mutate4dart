@@ -70,12 +70,14 @@ class ParallelMutationRunner {
     try {
       final workers = [
         for (var i = 0; i < jobs && i < plan.length; i++)
-          worker(MutationRunner(
-            projectRoot: _newWorkspace(files).projectRoot,
-            command: command,
-            run: run,
-            timeout: timeout,
-          )),
+          worker(
+            MutationRunner(
+              projectRoot: _newWorkspace(files).projectRoot,
+              command: command,
+              run: run,
+              timeout: timeout,
+            ),
+          ),
       ];
       // Not eager: after an error the other workers finish their current
       // mutant (aborted stops new work) before the shadows are deleted.
@@ -96,8 +98,10 @@ class ParallelMutationRunner {
   }
 
   ShadowWorkspace _newWorkspace(Set<String> files) {
-    final workspace =
-        ShadowWorkspace.create(projectRoot: projectRoot, files: files);
+    final workspace = ShadowWorkspace.create(
+      projectRoot: projectRoot,
+      files: files,
+    );
     _workspaces.add(workspace);
     return workspace;
   }

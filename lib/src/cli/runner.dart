@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:args/args.dart';
-import 'package:crap4dart/crap4dart.dart';
+import 'package:crap_dart/crap_dart.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
@@ -24,7 +24,7 @@ import 'config_file.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.11.0';
+const String mutate4dartVersion = '0.12.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -59,71 +59,120 @@ class Mutate4DartRunner {
   static final ArgParser _parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.')
     ..addFlag('version', negatable: false, help: 'Print the version.')
-    ..addOption('config',
-        defaultsTo: defaultConfigPath,
-        help: 'Config file with defaults for these options (snake_case '
-            'keys); flags given here win.')
-    ..addOption('lcov',
-        defaultsTo: 'coverage/lcov.info',
-        help: 'LCOV file: only covered lines are mutated.')
-    ..addFlag('coverage',
-        defaultsTo: true, help: 'Skip mutants on lines no test executes.')
-    ..addFlag('collect-coverage',
-        help: 'Collect coverage by running only the tests that import the '
-            'target files, into $collectedLcovPath (Flutter projects), '
-            'instead of reading --lcov.')
+    ..addOption(
+      'config',
+      defaultsTo: defaultConfigPath,
+      help:
+          'Config file with defaults for these options (snake_case '
+          'keys); flags given here win.',
+    )
+    ..addOption(
+      'lcov',
+      defaultsTo: 'coverage/lcov.info',
+      help: 'LCOV file: only covered lines are mutated.',
+    )
+    ..addFlag(
+      'coverage',
+      defaultsTo: true,
+      help: 'Skip mutants on lines no test executes.',
+    )
+    ..addFlag(
+      'collect-coverage',
+      help:
+          'Collect coverage by running only the tests that import the '
+          'target files, into $collectedLcovPath (Flutter projects), '
+          'instead of reading --lcov.',
+    )
     ..addFlag('diff', help: 'Only mutate lines changed since HEAD.')
-    ..addOption('diff-base',
-        help: 'Only mutate lines changed since this git ref.')
-    ..addOption('test-command',
-        help: 'Test command; test files are appended '
-            '(default: flutter test --no-pub, or dart test).')
-    ..addOption('reach',
-        allowed: ['direct', 'transitive'],
-        defaultsTo: 'direct',
-        help: 'Run tests that import the file directly, or through any '
-            'chain of imports.')
-    ..addMultiOption('exclude',
-        help: 'Glob of project-relative files not to mutate, e.g. '
-            '"lib/l10n/**" (repeatable). Generated code (*.g.dart, '
-            '*.freezed.dart, *.gr.dart, *.mocks.dart) is always skipped.')
-    ..addOption('operators',
-        help: 'Comma-separated operator ids (default: all).')
-    ..addOption('max-mutants',
-        help: 'Run only the N mutants in the riskiest (highest CRAP) '
-            'methods.')
-    ..addOption('sample',
-        help: 'Run a random sample of the mutants: a count (50) or a '
-            'percentage (20%), for an unbiased score estimate.')
-    ..addOption('seed',
-        help: 'Seed of --sample, to repeat a sample (default: random, '
-            'printed).')
-    ..addOption('threshold',
-        defaultsTo: '0',
-        help: 'Minimum mutation score (0-100); below it exits 2.')
-    ..addOption('format',
-        allowed: ['console', 'json', 'markdown', 'stryker', 'html', 'junit'],
-        defaultsTo: 'console',
-        help: 'Report format; all but console write only the report to '
-            'stdout. markdown suits a CI job summary or PR comment, stryker '
-            'is the Stryker JSON schema (dashboard), html a page showing '
-            'it with the mutation-testing-elements viewer, junit JUnit XML '
-            '(survivors as failures) for CI test reports.')
-    ..addOption('jobs',
-        abbr: 'j',
-        help: 'Mutants run at once, each in an isolated shadow copy of '
-            'the project; 1 mutates in place (default: min(4, cores/2)).')
-    ..addOption('min-timeout',
-        defaultsTo: '30',
-        help: 'Seconds a mutant\'s tests may always run before it counts '
-            'as a timeout.')
-    ..addOption('timeout-factor',
-        defaultsTo: '3',
-        help: 'A mutant\'s tests may run this multiple of their unmutated '
-            'duration (at least --min-timeout).')
-    ..addFlag('dry-run',
-        negatable: false,
-        help: 'List the planned mutants and their tests without running.');
+    ..addOption(
+      'diff-base',
+      help: 'Only mutate lines changed since this git ref.',
+    )
+    ..addOption(
+      'test-command',
+      help:
+          'Test command; test files are appended '
+          '(default: flutter test --no-pub, or dart test).',
+    )
+    ..addOption(
+      'reach',
+      allowed: ['direct', 'transitive'],
+      defaultsTo: 'direct',
+      help:
+          'Run tests that import the file directly, or through any '
+          'chain of imports.',
+    )
+    ..addMultiOption(
+      'exclude',
+      help:
+          'Glob of project-relative files not to mutate, e.g. '
+          '"lib/l10n/**" (repeatable). Generated code (*.g.dart, '
+          '*.freezed.dart, *.gr.dart, *.mocks.dart) is always skipped.',
+    )
+    ..addOption(
+      'operators',
+      help: 'Comma-separated operator ids (default: all).',
+    )
+    ..addOption(
+      'max-mutants',
+      help:
+          'Run only the N mutants in the riskiest (highest CRAP) '
+          'methods.',
+    )
+    ..addOption(
+      'sample',
+      help:
+          'Run a random sample of the mutants: a count (50) or a '
+          'percentage (20%), for an unbiased score estimate.',
+    )
+    ..addOption(
+      'seed',
+      help:
+          'Seed of --sample, to repeat a sample (default: random, '
+          'printed).',
+    )
+    ..addOption(
+      'threshold',
+      defaultsTo: '0',
+      help: 'Minimum mutation score (0-100); below it exits 2.',
+    )
+    ..addOption(
+      'format',
+      allowed: ['console', 'json', 'markdown', 'stryker', 'html', 'junit'],
+      defaultsTo: 'console',
+      help:
+          'Report format; all but console write only the report to '
+          'stdout. markdown suits a CI job summary or PR comment, stryker '
+          'is the Stryker JSON schema (dashboard), html a page showing '
+          'it with the mutation-testing-elements viewer, junit JUnit XML '
+          '(survivors as failures) for CI test reports.',
+    )
+    ..addOption(
+      'jobs',
+      abbr: 'j',
+      help:
+          'Mutants run at once, each in an isolated shadow copy of '
+          'the project; 1 mutates in place (default: min(4, cores/2)).',
+    )
+    ..addOption(
+      'min-timeout',
+      defaultsTo: '30',
+      help:
+          'Seconds a mutant\'s tests may always run before it counts '
+          'as a timeout.',
+    )
+    ..addOption(
+      'timeout-factor',
+      defaultsTo: '3',
+      help:
+          'A mutant\'s tests may run this multiple of their unmutated '
+          'duration (at least --min-timeout).',
+    )
+    ..addFlag(
+      'dry-run',
+      negatable: false,
+      help: 'List the planned mutants and their tests without running.',
+    );
 
   /// Runs mutate4dart with [args]; returns the exit code.
   Future<int> execute(List<String> args) async {
@@ -134,8 +183,10 @@ class Mutate4DartRunner {
       return _usageError(e.message);
     }
     if (options['help'] as bool) {
-      stdout.writeln('Usage: mutate4dart [paths...] [options]\n\n'
-          '${_parser.usage}');
+      stdout.writeln(
+        'Usage: mutate4dart [paths...] [options]\n\n'
+        '${_parser.usage}',
+      );
       return ExitCodes.success;
     }
     if (options['version'] as bool) {
@@ -214,8 +265,11 @@ class Mutate4DartRunner {
     }
     final results = await _runMutants(options, plan, runner);
     if (results == null) return ExitCodes.usageError;
-    final report =
-        MutationReport.build(results, projectRoot: root, lcovPath: lcov);
+    final report = MutationReport.build(
+      results,
+      projectRoot: root,
+      lcovPath: lcov,
+    );
     stdout.write(_render(options['format'] as String, report, root));
     final threshold = double.tryParse(options['threshold'] as String) ?? 0;
     return (report.score ?? 100) < threshold
@@ -242,13 +296,14 @@ class Mutate4DartRunner {
     ArgResults options,
     String root,
     DiffLineMap? diff,
-  ) =>
-      [
-        for (final f in MutationPlan.dartFiles(
-            root, options.rest.isEmpty ? const ['lib'] : options.rest,
-            exclude: _excludes(options)))
-          if (diff == null || diff.hasRealChanges(f)) f,
-      ];
+  ) => [
+    for (final f in MutationPlan.dartFiles(
+      root,
+      options.rest.isEmpty ? const ['lib'] : options.rest,
+      exclude: _excludes(options),
+    ))
+      if (diff == null || diff.hasRealChanges(f)) f,
+  ];
 
   static String _render(String format, MutationReport report, String root) =>
       switch (format) {
@@ -307,10 +362,9 @@ class Mutate4DartRunner {
     });
     var done = 0;
     try {
-      return await parallel.runAll(
-        [for (final m in plan.mutants) (mutant: m.mutant, tests: m.tests)],
-        onResult: (r) => _progress(++done, plan.mutants.length, r),
-      );
+      return await parallel.runAll([
+        for (final m in plan.mutants) (mutant: m.mutant, tests: m.tests),
+      ], onResult: (r) => _progress(++done, plan.mutants.length, r));
     } on RedBaselineException catch (e) {
       _printRedBaseline(e);
       return null;
@@ -319,14 +373,17 @@ class Mutate4DartRunner {
     }
   }
 
-  void _progress(int done, int total, MutantResult r) =>
-      stderr.writeln('[$done/$total] ${r.mutant.file}:${r.mutant.line} '
-          '${r.mutant.operator}: ${r.status.name}');
+  void _progress(int done, int total, MutantResult r) => stderr.writeln(
+    '[$done/$total] ${r.mutant.file}:${r.mutant.line} '
+    '${r.mutant.operator}: ${r.status.name}',
+  );
 
   void _printRedBaseline(RedBaselineException e) => stderr
     ..writeln('Error: $e')
-    ..writeln('Fix the failing tests first: every mutant would look '
-        'killed.')
+    ..writeln(
+      'Fix the failing tests first: every mutant would look '
+      'killed.',
+    )
     ..writeln(e.output);
 
   TestCommand _testCommand(ArgResults options, String root) {
@@ -341,15 +398,22 @@ class Mutate4DartRunner {
     String root,
     List<String> tests,
   ) async {
-    final collector =
-        CoverageCollector(projectRoot: root, command: command, run: run);
+    final collector = CoverageCollector(
+      projectRoot: root,
+      command: command,
+      run: run,
+    );
     if (!collector.supported) {
-      throw const _UsageError('--collect-coverage needs flutter test. For '
-          'Dart projects run dart test --coverage and format_coverage, then '
-          'pass --lcov.');
+      throw const _UsageError(
+        '--collect-coverage needs flutter test. For '
+        'Dart projects run dart test --coverage and format_coverage, then '
+        'pass --lcov.',
+      );
     }
-    stderr.writeln('Collecting coverage from ${tests.toSet().length} test '
-        'file(s)...');
+    stderr.writeln(
+      'Collecting coverage from ${tests.toSet().length} test '
+      'file(s)...',
+    );
     try {
       return await collector.collect(tests.toSet().toList()..sort());
     } on RedBaselineException catch (e) {
@@ -361,13 +425,16 @@ class Mutate4DartRunner {
     if (!(options['coverage'] as bool)) return null;
     final path = p.join(root, options['lcov'] as String);
     if (File(path).existsSync()) return path;
-    throw _UsageError('No coverage file at ${options['lcov']}. Run the '
-        'tests with coverage first (flutter test --coverage / dart test '
-        '--coverage), pass --lcov, or use --no-coverage.');
+    throw _UsageError(
+      'No coverage file at ${options['lcov']}. Run the '
+      'tests with coverage first (flutter test --coverage / dart test '
+      '--coverage), pass --lcov, or use --no-coverage.',
+    );
   }
 
   Future<DiffLineMap?> _diff(ArgResults options, String root) async {
-    final base = options['diff-base'] as String? ??
+    final base =
+        options['diff-base'] as String? ??
         ((options['diff'] as bool) ? 'HEAD' : null);
     if (base == null) return null;
     try {
@@ -383,8 +450,10 @@ class Mutate4DartRunner {
     return {
       for (final id in ids.split(',').map((s) => s.trim()))
         MutationOperator.byId(id) ??
-            (throw _UsageError('Unknown operator "$id". Known: '
-                '${MutationOperator.values.map((o) => o.id).join(', ')}')),
+            (throw _UsageError(
+              'Unknown operator "$id". Known: '
+              '${MutationOperator.values.map((o) => o.id).join(', ')}',
+            )),
     };
   }
 
@@ -425,12 +494,15 @@ class Mutate4DartRunner {
     final raw = options['sample'] as String?;
     if (raw == null) return null;
     if (options['max-mutants'] != null) {
-      throw const _UsageError('--sample and --max-mutants cannot be '
-          'combined.');
+      throw const _UsageError(
+        '--sample and --max-mutants cannot be '
+        'combined.',
+      );
     }
     final seedRaw = options['seed'] as String?;
-    final seed =
-        seedRaw == null ? Random().nextInt(1 << 32) : int.tryParse(seedRaw);
+    final seed = seedRaw == null
+        ? Random().nextInt(1 << 32)
+        : int.tryParse(seedRaw);
     if (seed == null) {
       throw _UsageError('--seed must be an integer, got "$seedRaw".');
     }
@@ -442,15 +514,18 @@ class Mutate4DartRunner {
   }
 
   void _printPlan(MutationPlan plan, MutantSample? sample) {
-    final ignored =
-        plan.ignored == 0 ? '' : ', ${plan.ignored} ignored by pragma';
+    final ignored = plan.ignored == 0
+        ? ''
+        : ', ${plan.ignored} ignored by pragma';
     final sampled = sample == null
         ? ''
         : ' Sampled ${plan.mutants.length} of ${plan.sampledFrom} with '
-            '--seed ${sample.seed}.';
-    stderr.writeln('${plan.found} mutants found, ${plan.mutants.length} '
-        'to run (${plan.withoutTests} without tests importing their file'
-        '$ignored).$sampled');
+              '--seed ${sample.seed}.';
+    stderr.writeln(
+      '${plan.found} mutants found, ${plan.mutants.length} '
+      'to run (${plan.withoutTests} without tests importing their file'
+      '$ignored).$sampled',
+    );
     for (final file in plan.unparsed) {
       stderr.writeln('Skipped $file: it does not parse.');
     }
@@ -459,9 +534,11 @@ class Mutate4DartRunner {
   void _printDryRun(MutationPlan plan) {
     for (final m in plan.mutants) {
       final replacement = m.mutant.replacement.replaceAll('\n', r'\n');
-      stdout.writeln('${m.mutant.file}:${m.mutant.line} '
-          '[${m.mutant.operator}] -> $replacement  '
-          '(${m.tests.length} test file(s))');
+      stdout.writeln(
+        '${m.mutant.file}:${m.mutant.line} '
+        '[${m.mutant.operator}] -> $replacement  '
+        '(${m.tests.length} test file(s))',
+      );
     }
   }
 

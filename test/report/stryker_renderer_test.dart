@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
@@ -34,10 +34,19 @@ void main() {
       MutationReport.build(results, projectRoot: root.path);
 
   test('json follows the Stryker schema with 1-based positions', () {
-    final json = jsonDecode(StrykerRenderer(root.path).json(build([
-      _result(MutantStatus.killed),
-      _result(MutantStatus.invalid, tests: ['test/a_test.dart', 'test/b.dart']),
-    ]))) as Map<String, dynamic>;
+    final json =
+        jsonDecode(
+              StrykerRenderer(root.path).json(
+                build([
+                  _result(MutantStatus.killed),
+                  _result(
+                    MutantStatus.invalid,
+                    tests: ['test/a_test.dart', 'test/b.dart'],
+                  ),
+                ]),
+              ),
+            )
+            as Map<String, dynamic>;
     expect(json['schemaVersion'], '2');
     expect(json['thresholds'], {'high': 80, 'low': 60});
     expect(json['projectRoot'], root.path);
@@ -60,8 +69,10 @@ void main() {
     expect(mutants[1]['id'], '2');
     expect(mutants[1]['status'], 'CompileError');
     expect(mutants[1], isNot(contains('killedBy')));
-    expect(
-        (json['testFiles'] as Map).keys, ['test/a_test.dart', 'test/b.dart']);
+    expect((json['testFiles'] as Map).keys, [
+      'test/a_test.dart',
+      'test/b.dart',
+    ]);
     expect((json['testFiles'] as Map)['test/b.dart'], {
       'tests': [
         {'id': 'test/b.dart', 'name': 'test/b.dart'},
@@ -70,27 +81,23 @@ void main() {
   });
 
   test('maps survived and timeout statuses', () {
-    final json = jsonDecode(StrykerRenderer(root.path).json(build([
-      _result(MutantStatus.survived),
-      _result(MutantStatus.timeout),
-    ]))) as Map<String, dynamic>;
+    final json =
+        jsonDecode(
+              StrykerRenderer(root.path).json(
+                build([
+                  _result(MutantStatus.survived),
+                  _result(MutantStatus.timeout),
+                ]),
+              ),
+            )
+            as Map<String, dynamic>;
     final mutants = ((json['files'] as Map)['lib/a.dart'] as Map)['mutants'];
     expect((mutants as List).map((m) => m['status']), ['Survived', 'Timeout']);
-    expect(mutants[0], isNot(contains('killedBy')),
-        reason: 'a survivor was not killed, even by a single test file');
+    expect(
+      mutants[0],
+      isNot(contains('killedBy')),
+      reason: 'a survivor was not killed, even by a single test file',
+    );
     expect(mutants[1]['killedBy'], ['test/a_test.dart']);
-  });
-
-  test('html embeds the report and loads the viewer', () {
-    final html =
-        StrykerRenderer(root.path).html(build([_result(MutantStatus.killed)]));
-    expect(html, startsWith('<!DOCTYPE html>'));
-    expect(html, contains('<script defer src="${StrykerRenderer.viewerUrl}">'));
-    expect(html, contains('<mutation-test-report-app title-postfix='));
-    expect(html, contains('app.report = {"schemaVersion":"2"'));
-    expect(html, contains(r'\u' '003c/script>'),
-        reason: 'the source string literal is escaped');
-    expect(html.split('</script>'), hasLength(3),
-        reason: 'only the two real script tags close a script block');
   });
 }

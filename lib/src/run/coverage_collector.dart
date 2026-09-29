@@ -51,7 +51,9 @@ class CoverageCollector {
     }
     if (!File(lcov).existsSync()) {
       throw RedBaselineException(
-          tests, 'No coverage was written to $lcov.\n${result.output}');
+        tests,
+        'No coverage was written to $lcov.\n${result.output}',
+      );
     }
     return lcov;
   }

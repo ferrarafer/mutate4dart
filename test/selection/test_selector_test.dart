@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
@@ -30,14 +30,19 @@ void main() {
 
   test('direct: test files that import the library', () {
     final selector = TestSelector.build(root.path);
-    expect(selector.testsFor('lib/a.dart'),
-        ['test/a_test.dart', 'test/rel/rel_test.dart']);
+    expect(selector.testsFor('lib/a.dart'), [
+      'test/a_test.dart',
+      'test/rel/rel_test.dart',
+    ]);
   });
 
   test('transitive: also tests reaching it through other libraries', () {
     final selector = TestSelector.build(root.path);
-    expect(selector.testsFor('lib/a.dart', reach: TestReach.transitive),
-        ['test/a_test.dart', 'test/b_test.dart', 'test/rel/rel_test.dart']);
+    expect(selector.testsFor('lib/a.dart', reach: TestReach.transitive), [
+      'test/a_test.dart',
+      'test/b_test.dart',
+      'test/rel/rel_test.dart',
+    ]);
   });
 
   test('direct follows barrels that re-export the library', () {

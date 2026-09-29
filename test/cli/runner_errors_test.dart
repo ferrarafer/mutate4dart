@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../fake_runner.dart';
@@ -44,8 +44,11 @@ void main() {
     expect(run.stderr, contains('Restored lib/other.dart'));
   });
   test('a red baseline aborts with exit 1', () async {
-    final run = await runCli(root, [],
-        fake: FakeRunner((_, __) => result(1, output: 'boom')));
+    final run = await runCli(
+      root,
+      [],
+      fake: FakeRunner((_, _) => result(1, output: 'boom')),
+    );
     expect(run.exitCode, ExitCodes.usageError);
     expect(run.stderr, contains('Fix the failing tests first'));
   });

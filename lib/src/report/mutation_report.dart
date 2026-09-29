@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:crap4dart/crap4dart.dart';
+import 'package:crap_dart/crap_dart.dart';
 import 'package:path/path.dart' as p;
 
 import '../run/mutation_runner.dart';
@@ -111,20 +111,20 @@ class MutationReport {
     MethodReport? topLevel;
     for (final result in results) {
       final line = result.mutant.line;
-      final index =
-          ranges.indexWhere((r) => r.startLine <= line && line <= r.endLine);
+      final index = ranges.indexWhere(
+        (r) => r.startLine <= line && line <= r.endLine,
+      );
       if (index >= 0) {
         reports[index].results.add(result);
       } else {
-        (topLevel ??= MethodReport(file: file, name: '(top-level)', line: 1))
-            .results
-            .add(result);
+        (topLevel ??= MethodReport(
+          file: file,
+          name: '(top-level)',
+          line: 1,
+        )).results.add(result);
       }
     }
-    return [
-      ...reports.where((r) => r.results.isNotEmpty),
-      if (topLevel != null) topLevel,
-    ];
+    return [...reports.where((r) => r.results.isNotEmpty), ?topLevel];
   }
 }
 
@@ -139,18 +139,23 @@ class ReportRenderer {
   /// A per-method table (lowest score first) followed by the survivors.
   String console(MutationReport report) {
     final out = StringBuffer()
-      ..writeln(' SCORE  DET  SURV  INV   CRAP  CC  METHOD'
-          '                                   FILE:LINE');
+      ..writeln(
+        ' SCORE  DET  SURV  INV   CRAP  CC  METHOD'
+        '                                   FILE:LINE',
+      );
     final methods = [...report.methods]
       ..sort((a, b) => (a.score ?? 101).compareTo(b.score ?? 101));
     for (final m in methods) {
-      out.writeln('${_pct(m.score)}  ${_n(m.detected, 3)}  '
-          '${_n(m.survivors.length, 4)}  ${_n(m.results.length - m.scored, 3)}'
-          '  ${_crap(m.crap)}  ${_n(m.complexity, 2)}  '
-          '${m.name.padRight(40)}  ${m.file}:${m.line}');
+      out.writeln(
+        '${_pct(m.score)}  ${_n(m.detected, 3)}  '
+        '${_n(m.survivors.length, 4)}  ${_n(m.results.length - m.scored, 3)}'
+        '  ${_crap(m.crap)}  ${_n(m.complexity, 2)}  '
+        '${m.name.padRight(40)}  ${m.file}:${m.line}',
+      );
     }
-    final survivors =
-        report.results.where((r) => r.status == MutantStatus.survived).toList();
+    final survivors = report.results
+        .where((r) => r.status == MutantStatus.survived)
+        .toList();
     if (survivors.isNotEmpty) {
       out
         ..writeln()
@@ -161,8 +166,10 @@ class ReportRenderer {
     }
     out
       ..writeln()
-      ..writeln('Mutation score: ${_pct(report.score).trim()} '
-          '(${report.results.length} mutants)');
+      ..writeln(
+        'Mutation score: ${_pct(report.score).trim()} '
+        '(${report.results.length} mutants)',
+      );
     return out.toString();
   }
 
@@ -196,8 +203,10 @@ class ReportRenderer {
   String _describe(MutantResult r) {
     final lines = File(p.join(projectRoot, r.mutant.file)).readAsStringSync();
     final lineText = lines.split('\n')[r.mutant.line - 1].trim();
-    final mutatedText =
-        r.mutant.apply(lines).split('\n')[r.mutant.line - 1].trim();
+    final mutatedText = r.mutant
+        .apply(lines)
+        .split('\n')[r.mutant.line - 1]
+        .trim();
     return '  ${r.mutant.file}:${r.mutant.line} [${r.mutant.operator}]\n'
         '    - $lineText\n'
         '    + $mutatedText';

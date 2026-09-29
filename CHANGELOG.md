@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.12.0
+
+- Depends on [crap_dart](https://github.com/ferrarafer/crap_dart) 0.13.0,
+  the renamed continuation of crap4dart, instead of the crap4dart fork.
+  The dogfooding config is `crap_dart.yaml`.
+- `analyzer` 7.3 -> 14.4, SDK `^3.11.0`, `lints` 6.1, `test` 1.32;
+  sources use the Dart 3.7+ "tall" formatter style.
+- The public library `package:mutate4dart/mutate4dart.dart` exports only
+  `Mutate4DartRunner`, `ExitCodes`, `defaultJobs`, `mutate4dartVersion`,
+  `ProcessRunner`, `CommandResult` and `runProcess`. The rest is internal;
+  the CLI and its JSON, Stryker and JUnit reports are the contract.
+- pubspec topics and issue tracker for pub.dev. `publish_to: none` stays
+  until crap_dart is published and replaces the git dependency.
+
 ## 0.11.0
 
 - `--sample N` / `--sample P%` runs a random subset of the planned

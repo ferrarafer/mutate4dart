@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
@@ -9,22 +9,23 @@ import '../test_project.dart';
 /// 5), which the Dart VM never lists in LCOV, inside a method that ran,
 /// and the same shape in a method that never ran (lines 9 and 11).
 Directory _project() => createProject({
-      'lib/a.dart': 'bool ran(int a) {\n'
-          '  if (a > 1) {\n'
-          '    return true;\n'
-          '  }\n'
-          '  return false;\n'
-          '}\n'
-          'bool never(int a) {\n'
-          '  if (a > 1) {\n'
-          '    return true;\n'
-          '  }\n'
-          '  return false;\n'
-          '}\n'
-          'bool flag = true;\n',
-      'test/a_test.dart': "import 'package:demo/a.dart';\nvoid main() {}\n",
-      'coverage/lcov.info': 'SF:lib/a.dart\nDA:2,1\nDA:8,0\nend_of_record\n',
-    });
+  'lib/a.dart':
+      'bool ran(int a) {\n'
+      '  if (a > 1) {\n'
+      '    return true;\n'
+      '  }\n'
+      '  return false;\n'
+      '}\n'
+      'bool never(int a) {\n'
+      '  if (a > 1) {\n'
+      '    return true;\n'
+      '  }\n'
+      '  return false;\n'
+      '}\n'
+      'bool flag = true;\n',
+  'test/a_test.dart': "import 'package:demo/a.dart';\nvoid main() {}\n",
+  'coverage/lcov.info': 'SF:lib/a.dart\nDA:2,1\nDA:8,0\nend_of_record\n',
+});
 
 void main() {
   late Directory root;
@@ -43,16 +44,21 @@ void main() {
       lcovPath: lcov,
     );
     final lines = plan.mutants.map((m) => m.mutant.line).toList()..sort();
-    expect(lines, [2, 2, 3, 5],
-        reason: 'the condition and both returns of ran(); nothing of '
-            'never() nor the top-level flag');
+    expect(
+      lines,
+      [2, 2, 3, 5],
+      reason:
+          'the condition and both returns of ran(); nothing of '
+          'never() nor the top-level flag',
+    );
     expect(plan.found, 9);
     expect(plan.ignored, 0);
   });
 
   test('drops and counts mutants under an ignore pragma', () {
     writeFiles(root, {
-      'lib/a.dart': 'bool ran(int a) {\n'
+      'lib/a.dart':
+          'bool ran(int a) {\n'
           '  if (a > 1) { // mutate4dart: ignore relational_boundary\n'
           '    return true;\n'
           '  }\n'
@@ -69,7 +75,9 @@ void main() {
     );
     expect(plan.ignored, 2);
     expect(plan.found, 4);
-    expect([for (final m in plan.mutants) m.mutant.operator],
-        ['negate_condition', 'boolean_literal']);
+    expect(
+      [for (final m in plan.mutants) m.mutant.operator],
+      ['negate_condition', 'boolean_literal'],
+    );
   });
 }

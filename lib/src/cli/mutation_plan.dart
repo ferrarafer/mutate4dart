@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:crap4dart/crap4dart.dart';
+import 'package:crap_dart/crap_dart.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
@@ -62,13 +62,10 @@ class MutationPlan {
       }
       found += mutants.length;
       ignored += mutants.where((m) => m.ignored).length;
-      final kept = filter.apply(
-        [
-          for (final m in mutants)
-            if (!m.ignored) m
-        ],
-        methods: methods,
-      );
+      final kept = filter.apply([
+        for (final m in mutants)
+          if (!m.ignored) m,
+      ], methods: methods);
       final tests = selector.testsFor(file, reach: reach);
       if (tests.isEmpty) {
         withoutTests += kept.length;
@@ -156,8 +153,9 @@ class MutationPlan {
   /// lines the LCOV file does not list.
   static List<MethodInfo> _methods(String source, String file) {
     final parsed = DartParser().parse(content: source, path: file);
-    return const MethodExtractor(countConstructors: true)
-        .extract(parsed.unit, parsed.lineInfo, filePath: file);
+    return const MethodExtractor(
+      countConstructors: true,
+    ).extract(parsed.unit, parsed.lineInfo, filePath: file);
   }
 
   /// CRAP of the method containing each line (0 outside methods or

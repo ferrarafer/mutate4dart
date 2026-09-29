@@ -82,10 +82,7 @@ enum MutationOperator {
   ),
 
   /// `++` ↔ `--` (prefix and postfix).
-  increment(
-    'increment',
-    'Assert the counter after the step.',
-  ),
+  increment('increment', 'Assert the counter after the step.'),
 
   /// `true` ↔ `false`.
   booleanLiteral(

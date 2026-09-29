@@ -62,7 +62,7 @@ not swap an `&&`/`||` expression that contains a promoting test.
   a mutant is kept when its line has a hit count > 0. A line the LCOV file
   does not list (the Dart VM instruments only lines with a call or an
   operator, never a line holding just a literal) counts as covered when
-  it lies inside a method (crap4dart method extraction, constructors
+  it lies inside a method (crap_dart method extraction, constructors
   included) that has at least one line with a hit count > 0; outside
   methods it counts as uncovered. LCOV entries that are not
   project-relative are ignored. A missing LCOV file is a usage error
@@ -152,7 +152,7 @@ when the output shows a compilation failure, else `killed`.
 
 ## 8. Report
 
-Results are grouped per method (crap4dart method extraction), and mutants
+Results are grouped per method (crap_dart method extraction), and mutants
 outside methods are grouped under `(top-level)`. Per method: detected
 (killed + timeout), survived, invalid, CRAP and cyclomatic complexity.
 Score = detected / (detected + survived), N/A when that is zero.

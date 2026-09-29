@@ -44,12 +44,16 @@ class JUnitRenderer {
     List<(MethodReport, MutantResult)> cases,
   ) {
     final source = File(p.join(projectRoot, file)).readAsStringSync();
-    out.writeln('  <testsuite name="${_escape(file)}"'
-        '${_counts([for (final (_, r) in cases) r])}>');
+    out.writeln(
+      '  <testsuite name="${_escape(file)}"'
+      '${_counts([for (final (_, r) in cases) r])}>',
+    );
     for (final (method, r) in cases) {
-      out.writeln('    <testcase classname="${_escape(method.name)}" '
-          'name="${_escape(_name(r.mutant, source))}" '
-          'file="${_escape(file)}" line="${r.mutant.line}">');
+      out.writeln(
+        '    <testcase classname="${_escape(method.name)}" '
+        'name="${_escape(_name(r.mutant, source))}" '
+        'file="${_escape(file)}" line="${r.mutant.line}">',
+      );
       _outcome(out, r, source);
       out.writeln('    </testcase>');
     }
@@ -60,13 +64,17 @@ class JUnitRenderer {
     switch (r.status) {
       case MutantStatus.survived:
         out
-          ..writeln('      <failure type="survived" message="Survived: no '
-              'test detected this change">')
+          ..writeln(
+            '      <failure type="survived" message="Survived: no '
+            'test detected this change">',
+          )
           ..writeln(_escape(_details(r, source)))
           ..writeln('      </failure>');
       case MutantStatus.invalid:
-        out.writeln('      <skipped message="Invalid: the mutant does not '
-            'compile"/>');
+        out.writeln(
+          '      <skipped message="Invalid: the mutant does not '
+          'compile"/>',
+        );
       case MutantStatus.killed || MutantStatus.timeout:
         break;
     }

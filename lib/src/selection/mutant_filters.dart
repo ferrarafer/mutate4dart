@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:crap4dart/crap4dart.dart';
+import 'package:crap_dart/crap_dart.dart';
 import 'package:path/path.dart' as p;
 
 import '../mutation/mutant.dart';
@@ -14,8 +14,9 @@ class CoverageMap {
   /// [projectRoot]. Entries outside the project (e.g. the pub cache) are
   /// ignored.
   factory CoverageMap.load(String lcovPath, String projectRoot) {
-    final files = LcovParser(projectRoot: projectRoot)
-        .parse(File(lcovPath).readAsStringSync());
+    final files = LcovParser(
+      projectRoot: projectRoot,
+    ).parse(File(lcovPath).readAsStringSync());
     return CoverageMap({
       for (final file in files)
         if (!p.isAbsolute(file.path) && !file.path.startsWith('..'))
@@ -67,21 +68,22 @@ class MutantFilter {
   List<Mutant> apply(
     List<Mutant> mutants, {
     List<MethodInfo> methods = const [],
-  }) =>
-      [
-        for (final mutant in mutants)
-          if (_covered(mutant, methods) && _changed(mutant)) mutant,
-      ];
+  }) => [
+    for (final mutant in mutants)
+      if (_covered(mutant, methods) && _changed(mutant)) mutant,
+  ];
 
   bool _covered(Mutant m, List<MethodInfo> methods) {
     final coverage = this.coverage;
     if (coverage == null) return true;
     if (coverage.isCovered(m.file, m.line)) return true;
     if (coverage.isInstrumented(m.file, m.line)) return false;
-    return methods.any((method) =>
-        method.startLine <= m.line &&
-        m.line <= method.endLine &&
-        coverage.hasHitsIn(m.file, method.startLine, method.endLine));
+    return methods.any(
+      (method) =>
+          method.startLine <= m.line &&
+          m.line <= method.endLine &&
+          coverage.hasHitsIn(m.file, method.startLine, method.endLine),
+    );
   }
 
   bool _changed(Mutant m) => diff?.linesFor(m.file).contains(m.line) ?? true;

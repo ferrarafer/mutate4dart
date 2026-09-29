@@ -17,20 +17,24 @@ void main() {
     });
     File(p.join(root.path, 'coverage/lcov.info')).deleteSync();
     late final FakeRunner fake;
-    fake = FakeRunner((args, __) {
+    fake = FakeRunner((args, _) {
       final at = args.indexOf('--coverage-path');
       if (at >= 0) {
         File(args[at + 1])
           ..parent.createSync(recursive: true)
           ..writeAsStringSync(
-              'SF:lib/calc.dart\nDA:2,1\nDA:3,0\nend_of_record\n');
+            'SF:lib/calc.dart\nDA:2,1\nDA:3,0\nend_of_record\n',
+          );
         return result(0);
       }
       final source = File('${fake.cwd}/lib/calc.dart').readAsStringSync();
       return result(source.contains('a - b') ? 1 : 0);
     });
-    final run =
-        await runCli(root, ['--collect-coverage', '--jobs', '1'], fake: fake);
+    final run = await runCli(root, [
+      '--collect-coverage',
+      '--jobs',
+      '1',
+    ], fake: fake);
     expect(run.exitCode, 0);
     expect(run.stderr, contains('Collecting coverage from 1 test file(s)'));
     expect(fake.calls.first.command, contains('--coverage-path'));
@@ -52,8 +56,9 @@ void main() {
       'pubspec.yaml':
           'name: demo\ndependencies:\n  flutter:\n    sdk: flutter\n',
     });
-    final run = await runCli(root, ['--collect-coverage'],
-        fake: FakeRunner((_, __) => result(1, output: 'red')));
+    final run = await runCli(root, [
+      '--collect-coverage',
+    ], fake: FakeRunner((_, _) => result(1, output: 'red')));
     expect(run.exitCode, 1);
     expect(run.stderr, contains('Tests fail on unmutated code'));
   });

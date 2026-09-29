@@ -30,12 +30,13 @@ class CommandResult {
 
 /// Runs [executable] with [arguments] in [workingDirectory], killing it
 /// after [timeout]. Injected so tests never spawn real test suites.
-typedef ProcessRunner = Future<CommandResult> Function(
-  String executable,
-  List<String> arguments, {
-  required String workingDirectory,
-  required Duration timeout,
-});
+typedef ProcessRunner =
+    Future<CommandResult> Function(
+      String executable,
+      List<String> arguments, {
+      required String workingDirectory,
+      required Duration timeout,
+    });
 
 /// Default [ProcessRunner] backed by [Process.start].
 Future<CommandResult> runProcess(
@@ -57,11 +58,14 @@ Future<CommandResult> runProcess(
     process.stderr.transform(utf8.decoder).forEach(output.write),
   ]);
   var timedOut = false;
-  final exitCode = await process.exitCode.timeout(timeout, onTimeout: () {
-    timedOut = true;
-    process.kill(ProcessSignal.sigkill);
-    return -1;
-  });
+  final exitCode = await process.exitCode.timeout(
+    timeout,
+    onTimeout: () {
+      timedOut = true;
+      process.kill(ProcessSignal.sigkill);
+      return -1;
+    },
+  );
   if (!timedOut) await done;
   return CommandResult(
     exitCode: exitCode,

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -33,7 +33,7 @@ void main() {
   test('runs jobs in shadows, in plan order, originals untouched', () async {
     final seen = <String>{};
     late final FakeRunner fake;
-    fake = FakeRunner((_, __) {
+    fake = FakeRunner((_, _) {
       seen.add(fake.cwd!);
       final source = File(p.join(fake.cwd!, 'lib/a.dart')).readAsStringSync();
       // Kill the mutant of the second `+` only.
@@ -46,20 +46,27 @@ void main() {
       jobs: 2,
       run: fake.call,
     ).runAll([_job(0), _job(1)], onResult: finished.add);
-    expect(results.map((r) => r.status),
-        [MutantStatus.survived, MutantStatus.killed]);
+    expect(results.map((r) => r.status), [
+      MutantStatus.survived,
+      MutantStatus.killed,
+    ]);
     expect(finished, hasLength(2));
     expect(seen, hasLength(2), reason: 'one shadow per worker');
     expect(
-        seen.any((d) => p.isWithin(root.path, d) || d == root.path), isFalse);
+      seen.any((d) => p.isWithin(root.path, d) || d == root.path),
+      isFalse,
+    );
     expect(File(p.join(root.path, 'lib/a.dart')).readAsStringSync(), _source);
-    expect(seen.every((d) => !Directory(d).existsSync()), isTrue,
-        reason: 'shadows are deleted');
+    expect(
+      seen.every((d) => !Directory(d).existsSync()),
+      isTrue,
+      reason: 'shadows are deleted',
+    );
   });
 
   test('a red baseline aborts and still removes the shadows', () async {
     late final FakeRunner fake;
-    fake = FakeRunner((_, __) => result(1, output: 'red'));
+    fake = FakeRunner((_, _) => result(1, output: 'red'));
     await expectLater(
       ParallelMutationRunner(
         projectRoot: root.path,
@@ -73,14 +80,11 @@ void main() {
   });
 
   test('defaultJobs is half the cores, between 1 and 4', () {
-    expect([
-      for (final c in [1, 2, 6, 11, 32]) defaultJobs(c)
-    ], [
-      1,
-      1,
-      3,
-      4,
-      4
-    ]);
+    expect(
+      [
+        for (final c in [1, 2, 6, 11, 32]) defaultJobs(c),
+      ],
+      [1, 1, 3, 4, 4],
+    );
   });
 }

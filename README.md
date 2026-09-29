@@ -1,7 +1,7 @@
 # mutate4dart
 
 Mutation testing for Dart and Flutter projects. It is a sibling of
-[crap4dart](https://github.com/ferrarafer/crap4dart), in the spirit of Uncle
+[crap_dart](https://github.com/ferrarafer/crap_dart), in the spirit of Uncle
 Bob's `crap4java` / `mutate4java`.
 
 Line coverage shows that a line *ran*. It doesn't show that a test would

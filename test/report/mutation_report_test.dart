@@ -1,18 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 import '../test_project.dart';
 
-const _source = 'int top = 1 + 2;\n'
+const _source =
+    'int top = 1 + 2;\n'
     'int f(int a) {\n'
     '  return a + 1;\n'
     '}\n';
 
 MutantResult _at(int line, MutantStatus status) {
-  final offset = _source.split('\n').take(line - 1).join('\n').length +
+  final offset =
+      _source.split('\n').take(line - 1).join('\n').length +
       (line > 1 ? 1 : 0) +
       _source.split('\n')[line - 1].indexOf('+');
   return MutantResult(
@@ -32,17 +34,19 @@ MutantResult _at(int line, MutantStatus status) {
 void main() {
   late Directory root;
 
-  setUp(() => root = createProject({
-        'lib/a.dart': _source,
-        'coverage/lcov.info': 'SF:lib/a.dart\nDA:3,1\nend_of_record\n',
-      }));
+  setUp(
+    () => root = createProject({
+      'lib/a.dart': _source,
+      'coverage/lcov.info': 'SF:lib/a.dart\nDA:3,1\nend_of_record\n',
+    }),
+  );
   tearDown(() => root.deleteSync(recursive: true));
 
   MutationReport build(List<MutantResult> results) => MutationReport.build(
-        results,
-        projectRoot: root.path,
-        lcovPath: '${root.path}/coverage/lcov.info',
-      );
+    results,
+    projectRoot: root.path,
+    lcovPath: '${root.path}/coverage/lcov.info',
+  );
 
   test('groups per method, top-level code separately', () {
     final report = build([
@@ -67,21 +71,30 @@ void main() {
   });
 
   test('console lists survivors with original and mutated lines', () {
-    final text = ReportRenderer(root.path)
-        .console(build([_at(3, MutantStatus.survived)]));
+    final text = ReportRenderer(
+      root.path,
+    ).console(build([_at(3, MutantStatus.survived)]));
     expect(text, contains('  0.0%'));
     expect(text, contains('(top-level).f'));
     expect(
-        text,
-        contains('lib/a.dart:3 [arithmetic]\n'
-            '    - return a + 1;\n'
-            '    + return a - 1;'));
+      text,
+      contains(
+        'lib/a.dart:3 [arithmetic]\n'
+        '    - return a + 1;\n'
+        '    + return a - 1;',
+      ),
+    );
     expect(text, contains('Mutation score: 0.0% (1 mutants)'));
   });
 
   test('json carries per-mutant status', () {
-    final json = jsonDecode(ReportRenderer(root.path)
-        .json(build([_at(3, MutantStatus.killed)]))) as Map<String, dynamic>;
+    final json =
+        jsonDecode(
+              ReportRenderer(
+                root.path,
+              ).json(build([_at(3, MutantStatus.killed)])),
+            )
+            as Map<String, dynamic>;
     expect(json['score'], 100.0);
     final mutant =
         ((json['methods'] as List).single as Map)['mutants'].single as Map;

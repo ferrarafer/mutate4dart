@@ -72,8 +72,10 @@ class ShadowWorkspace {
   }
 
   /// [path]'s directory and its ancestors down from [upTo] (inclusive).
-  static Iterable<String> _ancestors(String path,
-      {required String upTo}) sync* {
+  static Iterable<String> _ancestors(
+    String path, {
+    required String upTo,
+  }) sync* {
     var dir = FileSystemEntity.isDirectorySync(path) ? path : p.dirname(path);
     while (dir == upTo || p.isWithin(upTo, dir)) {
       yield dir;

@@ -1,4 +1,4 @@
-# crap4dart configuration (dogfooding the sibling tool).
+# crap_dart configuration (dogfooding the sibling tool).
 sources: [lib, bin, test]
 
 crap:

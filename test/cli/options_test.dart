@@ -26,8 +26,11 @@ void main() {
     ]);
     expect(run.exitCode, 0);
     expect(run.stdout, isNot(contains('lib/calc.dart')));
-    expect(run.stderr, startsWith('1 mutants found, 0 to run'),
-        reason: 'only lib/other.dart is left');
+    expect(
+      run.stderr,
+      startsWith('1 mutants found, 0 to run'),
+      reason: 'only lib/other.dart is left',
+    );
   });
 
   test('--sample runs a seeded random subset and prints the seed', () async {
@@ -42,26 +45,30 @@ void main() {
   });
 
   for (final jobs in ['1', '2']) {
-    test('--min-timeout and --timeout-factor set the timeout (jobs $jobs)',
-        () async {
-      final fake = FakeRunner((_, __) => result(0, seconds: 20));
-      await runCli(
-          root,
-          [
-            '--jobs',
-            jobs,
-            '--operators',
-            'arithmetic',
-            '--min-timeout',
-            '10',
-            '--timeout-factor',
-            '1.5',
-          ],
-          fake: fake);
-      expect(fake.calls.last.timeout, const Duration(seconds: 30));
-      final floor = FakeRunner((_, __) => result(0, seconds: 1));
-      await runCli(root, ['--jobs', jobs, '--min-timeout', '45'], fake: floor);
-      expect(floor.calls.last.timeout, const Duration(seconds: 45));
-    });
+    test(
+      '--min-timeout and --timeout-factor set the timeout (jobs $jobs)',
+      () async {
+        final fake = FakeRunner((_, _) => result(0, seconds: 20));
+        await runCli(root, [
+          '--jobs',
+          jobs,
+          '--operators',
+          'arithmetic',
+          '--min-timeout',
+          '10',
+          '--timeout-factor',
+          '1.5',
+        ], fake: fake);
+        expect(fake.calls.last.timeout, const Duration(seconds: 30));
+        final floor = FakeRunner((_, _) => result(0, seconds: 1));
+        await runCli(root, [
+          '--jobs',
+          jobs,
+          '--min-timeout',
+          '45',
+        ], fake: floor);
+        expect(floor.calls.last.timeout, const Duration(seconds: 45));
+      },
+    );
   }
 }

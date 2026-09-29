@@ -5,11 +5,11 @@ import 'dart:math';
 class MutantSample {
   /// A sample of [count] mutants.
   const MutantSample.count(int this.count, {required this.seed})
-      : percent = null;
+    : percent = null;
 
   /// A sample of [percent] of the mutants (0 < percent <= 100).
   const MutantSample.percent(double this.percent, {required this.seed})
-      : count = null;
+    : count = null;
 
   /// Parses `N` (a count >= 1) or `P%` (0 < P <= 100). Throws a
   /// [FormatException] otherwise.
@@ -25,8 +25,10 @@ class MutantSample {
         return MutantSample.count(value, seed: seed);
       }
     }
-    throw FormatException('expected a count >= 1 or a percentage in '
-        '(0, 100] such as 20%, got "$raw"');
+    throw FormatException(
+      'expected a count >= 1 or a percentage in '
+      '(0, 100] such as 20%, got "$raw"',
+    );
   }
 
   /// Mutants to keep, or `null` for a percentage.

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -27,11 +27,11 @@ void main() {
   String source() => File(p.join(root.path, 'lib/a.dart')).readAsStringSync();
 
   MutationRunner runner(FakeRunner fake) => MutationRunner(
-        projectRoot: root.path,
-        command: const TestCommand('dart', ['test']),
-        run: fake.call,
-        timeout: const MutantTimeout(min: Duration(seconds: 5)),
-      );
+    projectRoot: root.path,
+    command: const TestCommand('dart', ['test']),
+    run: fake.call,
+    timeout: const MutantTimeout(min: Duration(seconds: 5)),
+  );
 
   Future<MutantStatus> statusFor(CommandResult mutantResult) async {
     final fake = FakeRunner((_, call) => call == 0 ? result(0) : mutantResult);
@@ -42,17 +42,25 @@ void main() {
 
   test('classifies killed, survived, timeout and invalid mutants', () async {
     expect(
-        await statusFor(result(1, output: 'Expected: 2')), MutantStatus.killed);
+      await statusFor(result(1, output: 'Expected: 2')),
+      MutantStatus.killed,
+    );
     expect(await statusFor(result(0)), MutantStatus.survived);
     expect(
-        await statusFor(const CommandResult(
-            exitCode: -1,
-            output: '',
-            elapsed: Duration(seconds: 9),
-            timedOut: true)),
-        MutantStatus.timeout);
-    expect(await statusFor(result(1, output: 'Error: Compilation failed')),
-        MutantStatus.invalid);
+      await statusFor(
+        const CommandResult(
+          exitCode: -1,
+          output: '',
+          elapsed: Duration(seconds: 9),
+          timedOut: true,
+        ),
+      ),
+      MutantStatus.timeout,
+    );
+    expect(
+      await statusFor(result(1, output: 'Error: Compilation failed')),
+      MutantStatus.invalid,
+    );
   });
 
   test('runs the tests on the mutated file and restores it', () async {
@@ -69,17 +77,23 @@ void main() {
     expect(outcome.detected, isTrue);
     expect(outcome.tests, ['test/a_test.dart']);
     expect(fake.calls.last.command, 'dart test test/a_test.dart');
-    expect(Directory(p.join(root.path, '.mutate4dart/backup/lib')).listSync(),
-        isEmpty);
+    expect(
+      Directory(p.join(root.path, '.mutate4dart/backup/lib')).listSync(),
+      isEmpty,
+    );
   });
 
   test('restores the file even when the test run throws', () async {
-    final fake = FakeRunner((_, call) =>
-        call == 0 ? result(0) : throw const ProcessException('x', []));
+    final fake = FakeRunner(
+      (_, call) =>
+          call == 0 ? result(0) : throw const ProcessException('x', []),
+    );
     final r = runner(fake);
     await r.verifyBaseline(['t']);
     await expectLater(
-        r.runMutant(_mutant, ['t']), throwsA(isA<ProcessException>()));
+      r.runMutant(_mutant, ['t']),
+      throwsA(isA<ProcessException>()),
+    );
     expect(source(), _source);
   });
 }

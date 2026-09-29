@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 
 /// A [ProcessRunner] that records calls and answers from [respond], which
 /// receives the arguments and the call index.
@@ -26,8 +26,10 @@ class FakeRunner {
     required Duration timeout,
   }) async {
     cwd = workingDirectory;
-    calls
-        .add((command: [executable, ...arguments].join(' '), timeout: timeout));
+    calls.add((
+      command: [executable, ...arguments].join(' '),
+      timeout: timeout,
+    ));
     return respond(arguments, calls.length - 1);
   }
 }
@@ -42,14 +44,14 @@ CommandResult result(int exitCode, {String output = '', int seconds = 1}) =>
 
 /// A [FakeRunner] that writes a minimal LCOV file wherever
 /// `--coverage-path` points, and passes every other run.
-FakeRunner writesCoverage(
-        {String lcov = 'SF:lib/a.dart\nDA:1,1\nend_of_record\n'}) =>
-    FakeRunner((args, __) {
-      final at = args.indexOf('--coverage-path');
-      if (at >= 0) {
-        File(args[at + 1])
-          ..parent.createSync(recursive: true)
-          ..writeAsStringSync(lcov);
-      }
-      return result(0);
-    });
+FakeRunner writesCoverage({
+  String lcov = 'SF:lib/a.dart\nDA:1,1\nend_of_record\n',
+}) => FakeRunner((args, _) {
+  final at = args.indexOf('--coverage-path');
+  if (at >= 0) {
+    File(args[at + 1])
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync(lcov);
+  }
+  return result(0);
+});

@@ -1,16 +1,18 @@
-import 'package:mutate4dart/mutate4dart.dart';
+import 'package:mutate4dart/src/internal/mutate4dart_internal.dart';
 import 'package:test/test.dart';
 
 /// The mutated versions of [source] (whole file text per mutant).
 List<String> mutate(String source, {Set<MutationOperator>? only}) {
-  final mutants =
-      MutantFinder(operators: only).find(source, file: 'lib/a.dart');
+  final mutants = MutantFinder(
+    operators: only,
+  ).find(source, file: 'lib/a.dart');
   return [for (final m in mutants) m.apply(source)];
 }
 
 void main() {
   test('negates if, while and ?: conditions with their original text', () {
-    const src = 'int f(int a) {\n'
+    const src =
+        'int f(int a) {\n'
         '  while (a > 9) a--;\n'
         '  if (a  >  1) return 1;\n'
         '  return a > 0 ? 1 : 0;\n'
@@ -23,7 +25,8 @@ void main() {
   });
 
   test('does not negate conditions other operators already cover', () {
-    const src = 'void f(int a, bool b) {\n'
+    const src =
+        'void f(int a, bool b) {\n'
         '  if (a == 1) return;\n'
         '  if ((a != 2)) return;\n'
         '  if (!b) return;\n'
@@ -32,7 +35,8 @@ void main() {
   });
 
   test('skips annotations, asserts and if-case patterns', () {
-    const src = '@Deprecated(1 > 0 ? "a" : "b")\n'
+    const src =
+        '@Deprecated(1 > 0 ? "a" : "b")\n'
         'void f(int a, Object o) {\n'
         '  assert(a > 0);\n'
         '  if (o case int _) return;\n'
@@ -41,7 +45,8 @@ void main() {
   });
 
   test('skips growable: booleans but keeps other named booleans', () {
-    const src = 'List<int> f(Iterable<int> xs) {\n'
+    const src =
+        'List<int> f(Iterable<int> xs) {\n'
         '  g(sorted: true);\n'
         '  return xs.toList(growable: false);\n'
         '}\n';

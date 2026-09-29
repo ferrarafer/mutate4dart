@@ -85,7 +85,7 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--operators` | all | Comma-separated operator ids (see below) |
 | `--max-mutants N` | | Only the N mutants in the riskiest methods |
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
-| `--format` | `console` | `json` or `markdown` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment) |
+| `--format` | `console` | `json`, `markdown`, `stryker` or `html` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment; see [Reports](#reports)) |
 | `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |
 | `--dry-run` | | Plan only, nothing is run |
 
@@ -106,6 +106,11 @@ unmutated code, `2` mutation score below `--threshold`.
 | `remove_not` | `!x` → `x` |
 | `negate_condition` | `if` / `while` / `?:` condition `c` → `!(c)` (skipped when `equality` or `remove_not` already yield the same program) |
 | `null_coalescing` | `a ?? b` → `b` |
+| `remove_call` | a call statement whose result is discarded is removed: `repo.save(x);`, `callback();`, `await sync();` → nothing (not `super.…()`, `print`, `debugPrint`, nor the body of an `if` or a loop) |
+
+`remove_call` finds side effects no test checks, e.g. a `notifyListeners()`
+or a repository write that the tests never observe. Removing the statement
+always compiles, so it never adds `invalid` mutants.
 
 Mutations that would break *type promotion* are skipped, because the
 result would not compile. Promotion is how Dart treats `x` as non-null
@@ -123,6 +128,33 @@ contains a null check or an `is` test (`x == null || x.isEmpty`,
 - **invalid**: the mutant did not compile. Excluded from the score.
 
 Score = detected / (detected + survived).
+
+## Reports
+
+All formats other than `console` write only the report to stdout, so
+redirect it to a file:
+
+```sh
+mutate4dart --format markdown >> "$GITHUB_STEP_SUMMARY"   # CI job summary
+mutate4dart --format stryker > mutation-report.json       # Stryker schema
+mutate4dart --format html > mutation-report.html          # open in a browser
+```
+
+- `json`: mutate4dart's own per-method document, with CRAP and the test
+  files run for each mutant.
+- `markdown`: a score line, a table of the methods with survivors and each
+  survivor as a collapsible `diff`.
+- `stryker`: the [Stryker mutation-testing report
+  schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)
+  (version 2), accepted by the [Stryker
+  dashboard](https://dashboard.stryker-mutator.io/) and by any tool that
+  reads Stryker reports. Statuses map to `Killed`, `Survived`, `Timeout`
+  and `CompileError`. Every mutant lists the test files that ran as
+  `coveredBy`; when a single test file ran, it is also the `killedBy`.
+- `html`: one self-contained page that embeds the Stryker JSON and shows
+  it with the [mutation-testing-elements](https://github.com/stryker-mutator/mutation-testing-elements)
+  viewer (loaded from jsDelivr, so viewing needs network access): per-file
+  source with the mutants inline, filters by status and operator.
 
 ## Limitations (0.2)
 

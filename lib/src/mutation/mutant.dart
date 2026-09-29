@@ -69,7 +69,11 @@ enum MutationOperator {
   negateCondition('negate_condition'),
 
   /// `a ?? b` → `b` (the fallback is always used).
-  nullCoalescing('null_coalescing');
+  nullCoalescing('null_coalescing'),
+
+  /// A call statement whose result is discarded is removed:
+  /// `save(x);` → nothing. Tests that never check the side effect miss it.
+  removeCall('remove_call');
 
   const MutationOperator(this.id);
 

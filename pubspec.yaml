@@ -3,7 +3,7 @@ description: >-
   Mutation testing for Dart and Flutter projects. Mutates covered code with
   package:analyzer, runs only the tests that import it, and reports a
   mutation score per method next to its CRAP score (sibling of crap4dart).
-version: 0.4.2
+version: 0.5.0
 publish_to: none
 repository: https://github.com/ferrarafer/mutate4dart
 

@@ -24,6 +24,12 @@ initializers, `if (x case ...)` conditions, and `+` with a string-literal
 operand. `negate_condition` shall be skipped when the condition (ignoring
 parentheses) is an `==`/`!=` comparison or a `!` expression.
 
+`remove_call` removes an expression statement that is a method or
+function invocation, or an `await` of one, and whose parent is a block or
+a `switch` member. Calls on `super` and calls named `print` or
+`debugPrint` shall not be removed. The replacement keeps only the
+newlines of the removed statement, so line numbers do not change.
+
 Mutants that break type promotion shall not be generated. A *promoting
 test* is an `is` expression or an `==`/`!=` comparison with a `null`
 literal operand, possibly combined through `&&`, `||`, `!` and
@@ -127,6 +133,19 @@ Score = detected / (detected + survived), N/A when that is zero.
   score first), the number of other methods, and the survivors as `diff`
   blocks inside a `<details>` element. Without mutants it states there was
   nothing to mutate. Stdout carries only Markdown.
+- Stryker (`--format stryker`): a document of the Stryker mutation-testing
+  report schema, `schemaVersion` `2`, `thresholds` `{high: 80, low: 60}`,
+  `projectRoot`, `files` keyed by project-relative path with `language`
+  `dart`, the full `source` and `mutants` (`id` sequential from `1`,
+  `mutatorName` = operator id, `replacement`, `location` with 1-based
+  `start`/`end` line and column, `status` mapped killed → `Killed`,
+  survived → `Survived`, timeout → `Timeout`, invalid → `CompileError`,
+  `coveredBy` = the test files run, `killedBy` = the same when the mutant
+  was detected by exactly one test file), and `testFiles` with one test
+  per test file (`id` = `name` = path). Stdout carries only JSON.
+- HTML (`--format html`): one page loading `mutation-testing-elements` from
+  a CDN and assigning the Stryker document to its `report` property, with
+  `<` in the JSON written as its JSON unicode escape (backslash `u003c`). Stdout carries only HTML.
 
 ## 9. Exit codes
 

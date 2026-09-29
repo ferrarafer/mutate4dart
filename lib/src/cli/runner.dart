@@ -9,6 +9,7 @@ import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
 import '../report/markdown_renderer.dart';
 import '../report/mutation_report.dart';
+import '../report/stryker_renderer.dart';
 import '../run/coverage_collector.dart';
 import '../run/mutation_runner.dart';
 import '../run/parallel_runner.dart';
@@ -18,7 +19,7 @@ import '../selection/test_selector.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.4.2';
+const String mutate4dartVersion = '0.5.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -84,10 +85,12 @@ class Mutate4DartRunner {
         defaultsTo: '0',
         help: 'Minimum mutation score (0-100); below it exits 2.')
     ..addOption('format',
-        allowed: ['console', 'json', 'markdown'],
+        allowed: ['console', 'json', 'markdown', 'stryker', 'html'],
         defaultsTo: 'console',
-        help: 'Report format: json and markdown write only the report to '
-            'stdout (markdown suits a CI job summary or PR comment).')
+        help: 'Report format; all but console write only the report to '
+            'stdout. markdown suits a CI job summary or PR comment, stryker '
+            'is the Stryker JSON schema (dashboard), html a page showing '
+            'it with the mutation-testing-elements viewer.')
     ..addOption('jobs',
         abbr: 'j',
         help: 'Mutants run at once, each in an isolated shadow copy of '
@@ -198,6 +201,8 @@ class Mutate4DartRunner {
       switch (format) {
         'json' => '${ReportRenderer(root).json(report)}\n',
         'markdown' => MarkdownRenderer(root).render(report),
+        'stryker' => '${StrykerRenderer(root).json(report)}\n',
+        'html' => StrykerRenderer(root).html(report),
         _ => ReportRenderer(root).console(report),
       };
 
@@ -350,8 +355,9 @@ class Mutate4DartRunner {
 
   void _printDryRun(MutationPlan plan) {
     for (final m in plan.mutants) {
+      final replacement = m.mutant.replacement.replaceAll('\n', r'\n');
       stdout.writeln('${m.mutant.file}:${m.mutant.line} '
-          '[${m.mutant.operator}] -> ${m.mutant.replacement}  '
+          '[${m.mutant.operator}] -> $replacement  '
           '(${m.tests.length} test file(s))');
     }
   }

@@ -224,6 +224,41 @@ class _MutantVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
+  void visitExpressionStatement(ExpressionStatement node) {
+    if (_isRemovableCall(node)) {
+      // Only the newlines are kept, so the line numbers of the rest of
+      // the file do not move.
+      _add(
+        MutationOperator.removeCall,
+        node.offset,
+        node.length,
+        _text(node).replaceAll(RegExp(r'[^\n]'), ''),
+      );
+    }
+    super.visitExpressionStatement(node);
+  }
+
+  /// A call whose result is discarded, directly in a block or a `case`
+  /// body: `save(x);`, `a.b(c);`, `callback();`, `await sync();`. Not
+  /// mutated: calls on `super` (the analyzer already enforces them) and
+  /// `print` / `debugPrint` (removing logging is noise, not a bug). A
+  /// statement that is the body of an `if` or a loop is kept, because
+  /// removing it would make the next statement the body.
+  static bool _isRemovableCall(ExpressionStatement node) {
+    if (node.parent is! Block && node.parent is! SwitchMember) return false;
+    var e = node.expression;
+    if (e is AwaitExpression) e = e.expression;
+    return switch (e) {
+      MethodInvocation(:final target, :final methodName) =>
+        target is! SuperExpression && !_logging.contains(methodName.name),
+      FunctionExpressionInvocation() => true,
+      _ => false,
+    };
+  }
+
+  static const Set<String> _logging = {'print', 'debugPrint'};
+
+  @override
   void visitBooleanLiteral(BooleanLiteral node) {
     _swapToken(
       MutationOperator.booleanLiteral,

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0
+
+- New operator `remove_call`: a call statement whose result is discarded
+  (`repo.save(x);`, `callback();`, `await sync();`) is removed, exposing
+  side effects no test checks. Calls on `super`, `print` and `debugPrint`
+  are left alone, as are single-statement `if` and loop bodies. The
+  replacement keeps the statement's newlines so line numbers stay stable.
+- `--format stryker`: the Stryker mutation-testing report schema
+  (version 2) for the Stryker dashboard and compatible tools. Each mutant
+  lists the test files that ran as `coveredBy`, and as `killedBy` when a
+  single file detected it.
+- `--format html`: a self-contained page that embeds the Stryker report
+  and shows it with the `mutation-testing-elements` viewer.
+- `--dry-run` escapes newlines in replacements.
+
 ## 0.4.2
 
 - Internal: `Mutate4DartRunner._mutate` back under the project's own

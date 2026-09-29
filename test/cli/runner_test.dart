@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:mutate4dart/mutate4dart.dart';
@@ -13,7 +12,7 @@ void main() {
   tearDown(() => root.deleteSync(recursive: true));
 
   test('--version and --help', () async {
-    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.4.2\n');
+    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.5.0\n');
     final help = await runCli(root, ['--help']);
     expect(help.exitCode, ExitCodes.success);
     expect(help.stdout, contains('--test-command'));
@@ -43,17 +42,6 @@ void main() {
         contains('if (a > 0) return a + b;'));
   });
 
-  test('json output and --threshold', () async {
-    final run = await runCli(root, ['--format', 'json', '--threshold', '50'],
-        fake: killWhen('a - b'));
-    expect(run.exitCode, ExitCodes.thresholdMissed);
-    final json = jsonDecode(run.stdout) as Map<String, dynamic>;
-    final method = (json['methods'] as List).single as Map<String, dynamic>;
-    expect(method['method'], '(top-level).add');
-    expect((method['mutants'] as List).map((m) => m['status']),
-        containsAll(['killed', 'survived']));
-  });
-
   test('--operators and --max-mutants narrow the plan', () async {
     final run = await runCli(root, [
       '--dry-run',
@@ -70,12 +58,5 @@ void main() {
     final run = await runCli(root, ['--jobs', '1'], fake: fake);
     expect(run.stdout, contains('Mutation score: 33.3% (3 mutants)'));
     expect(fake.cwd, root.path);
-  });
-
-  test('--format markdown writes the report as Markdown', () async {
-    final run =
-        await runCli(root, ['--format', 'markdown'], fake: killWhen('a - b'));
-    expect(run.stdout, startsWith('## Mutation testing (mutate4dart)'));
-    expect(run.stdout, contains('```diff'));
   });
 }

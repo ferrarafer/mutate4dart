@@ -40,9 +40,14 @@ not swap an `&&`/`||` expression that contains a promoting test.
 ## 4. Filters
 
 - **Coverage** (default on): with `--lcov` (default `coverage/lcov.info`),
-  a mutant is kept only when its line has a hit count > 0. LCOV entries
-  that are not project-relative are ignored. A missing LCOV file is a usage
-  error unless `--no-coverage` is given.
+  a mutant is kept when its line has a hit count > 0. A line the LCOV file
+  does not list (the Dart VM instruments only lines with a call or an
+  operator, never a line holding just a literal) counts as covered when
+  it lies inside a method (crap4dart method extraction, constructors
+  included) that has at least one line with a hit count > 0; outside
+  methods it counts as uncovered. LCOV entries that are not
+  project-relative are ignored. A missing LCOV file is a usage error
+  unless `--no-coverage` is given.
 - **Collected coverage**: with `--collect-coverage`, the test files
   selected (section 5) for all target files shall first run once with
   `--coverage --coverage-path .mutate4dart/lcov.info`, and that file is

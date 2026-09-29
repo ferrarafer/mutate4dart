@@ -22,7 +22,8 @@ void main() {
       if (at >= 0) {
         File(args[at + 1])
           ..parent.createSync(recursive: true)
-          ..writeAsStringSync('SF:lib/calc.dart\nDA:2,1\nend_of_record\n');
+          ..writeAsStringSync(
+              'SF:lib/calc.dart\nDA:2,1\nDA:3,0\nend_of_record\n');
         return result(0);
       }
       final source = File('${fake.cwd}/lib/calc.dart').readAsStringSync();

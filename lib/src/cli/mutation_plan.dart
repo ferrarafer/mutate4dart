@@ -42,15 +42,17 @@ class MutationPlan {
     final unparsed = <String>[];
     for (final file in files) {
       final List<Mutant> mutants;
+      final List<MethodInfo> methods;
       try {
         final source = File(p.join(projectRoot, file)).readAsStringSync();
         mutants = finder.find(source, file: file);
+        methods = _methods(source, file);
       } on DartParseException {
         unparsed.add(file);
         continue;
       }
       found += mutants.length;
-      final kept = filter.apply(mutants);
+      final kept = filter.apply(mutants, methods: methods);
       final tests = selector.testsFor(file, reach: reach);
       if (tests.isEmpty) {
         withoutTests += kept.length;
@@ -102,6 +104,14 @@ class MutationPlan {
     }
     return files.where((f) => !_generatedSuffixes.any(f.endsWith)).toList()
       ..sort();
+  }
+
+  /// The methods of [source], for the coverage filter's fallback on
+  /// lines the LCOV file does not list.
+  static List<MethodInfo> _methods(String source, String file) {
+    final parsed = DartParser().parse(content: source, path: file);
+    return const MethodExtractor(countConstructors: true)
+        .extract(parsed.unit, parsed.lineInfo, filePath: file);
   }
 
   /// CRAP of the method containing each line (0 outside methods or

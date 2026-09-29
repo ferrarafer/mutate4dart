@@ -12,7 +12,7 @@ void main() {
   tearDown(() => root.deleteSync(recursive: true));
 
   test('--version and --help', () async {
-    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.5.0\n');
+    expect((await runCli(root, ['--version'])).stdout, 'mutate4dart 0.5.1\n');
     final help = await runCli(root, ['--help']);
     expect(help.exitCode, ExitCodes.success);
     expect(help.stdout, contains('--test-command'));

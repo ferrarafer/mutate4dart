@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- The coverage filter no longer drops mutants on lines the LCOV file
+  does not list. The Dart VM instruments only lines with a call or an
+  operator, so `return true;` / `return false;` never appear and their
+  `boolean_literal` mutants were skipped as uncovered. Such a line now
+  counts as covered when its enclosing method has an executed line.
+
 ## 0.5.0
 
 - New operator `remove_call`: a call statement whose result is discarded

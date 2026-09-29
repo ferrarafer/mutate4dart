@@ -31,8 +31,10 @@ Mutation score: 69.9% (184 mutants)
    code (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.mocks.dart`),
    annotations and `assert`s are skipped.
 2. **Filter.** Only mutants on lines the tests executed are kept, using an
-   LCOV file. A mutant no test runs can only survive. With `--diff` /
-   `--diff-base`, only mutants on changed lines are kept.
+   LCOV file. A mutant no test runs can only survive. The Dart VM never
+   lists a line that holds only a literal, such as `return true;`, so
+   such a line counts as executed when its method has any executed line.
+   With `--diff` / `--diff-base`, only mutants on changed lines are kept.
 3. **Select tests** from the import graph. Only the `*_test.dart` files that
    import the mutated library are run: directly, through a barrel that
    re-exports it, or via its owning library for `part` files. The whole

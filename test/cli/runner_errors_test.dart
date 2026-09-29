@@ -23,6 +23,9 @@ void main() {
       ['--min-timeout', '0'],
       ['--timeout-factor', '0.5'],
       ['--timeout-factor', 'x'],
+      ['--sample', '0'],
+      ['--sample', '5', '--seed', 'x'],
+      ['--sample', '5', '--max-mutants', '5'],
     ]) {
       final run = await runCli(root, args);
       expect(run.exitCode, ExitCodes.usageError, reason: '$args');

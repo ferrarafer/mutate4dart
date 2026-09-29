@@ -53,7 +53,8 @@ Mutation score: 85.8% (228 mutants)
    crash.
 6. **Report** per method, next to the method's CRAP score. The riskiest
    (highest-CRAP) methods are mutated first, so `--max-mutants` spends a
-   limited budget where it matters most.
+   limited budget where it matters most. `--sample` instead runs a random
+   subset, for an unbiased estimate of the whole score.
 
 Flutter projects (a pubspec that depends on `flutter`) run
 `flutter test --no-pub <files>`. Pure Dart projects run
@@ -88,6 +89,8 @@ mutate4dart --dry-run                # list the planned mutants and tests
 | `--reach` | `direct` | `transitive` also runs tests that reach the file through other libraries |
 | `--operators` | all | Comma-separated operator ids (see below) |
 | `--max-mutants N` | | Only the N mutants in the riskiest methods |
+| `--sample N` / `--sample P%` | | A random sample of N mutants or P% of them; the score estimates the full run's |
+| `--seed S` | random | Seed of `--sample`; the seed used is printed, so a sample can be repeated |
 | `--threshold` | `0` | Minimum mutation score; below it exits `2` |
 | `--format` | `console` | `json`, `markdown`, `stryker`, `html` or `junit` write only the report to stdout (Markdown suits `$GITHUB_STEP_SUMMARY` or a PR comment; see [Reports](#reports)) |
 | `--jobs N` | `min(4, cores/2)` | Parallel workers in shadow workspaces; `1` mutates in place |

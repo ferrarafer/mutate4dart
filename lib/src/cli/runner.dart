@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:args/args.dart';
 import 'package:crap4dart/crap4dart.dart';
@@ -17,12 +18,13 @@ import '../run/mutation_runner.dart';
 import '../run/parallel_runner.dart';
 import '../run/test_command.dart';
 import '../selection/mutant_filters.dart';
+import '../selection/mutant_sample.dart';
 import '../selection/test_selector.dart';
 import 'config_file.dart';
 import 'mutation_plan.dart';
 
 /// Current mutate4dart version.
-const String mutate4dartVersion = '0.10.0';
+const String mutate4dartVersion = '0.11.0';
 
 /// Process exit codes.
 abstract final class ExitCodes {
@@ -90,6 +92,12 @@ class Mutate4DartRunner {
     ..addOption('max-mutants',
         help: 'Run only the N mutants in the riskiest (highest CRAP) '
             'methods.')
+    ..addOption('sample',
+        help: 'Run a random sample of the mutants: a count (50) or a '
+            'percentage (20%), for an unbiased score estimate.')
+    ..addOption('seed',
+        help: 'Seed of --sample, to repeat a sample (default: random, '
+            'printed).')
     ..addOption('threshold',
         defaultsTo: '0',
         help: 'Minimum mutation score (0-100); below it exits 2.')
@@ -186,6 +194,7 @@ class Mutate4DartRunner {
             for (final f in files) ...selector.testsFor(f, reach: reach),
           ])
         : _lcovPath(options, root);
+    final sample = _sample(options);
     final plan = MutationPlan.build(
       projectRoot: root,
       files: files,
@@ -197,9 +206,8 @@ class Mutate4DartRunner {
       selector: selector,
       reach: reach,
       lcovPath: lcov,
-      maxMutants: _intOption(options, 'max-mutants'),
-    );
-    _printPlan(plan);
+    ).limited(maxMutants: _intOption(options, 'max-mutants'), sample: sample);
+    _printPlan(plan, sample);
     if (options['dry-run'] as bool) {
       _printDryRun(plan);
       return ExitCodes.success;
@@ -413,12 +421,36 @@ class Mutate4DartRunner {
     return value;
   }
 
-  void _printPlan(MutationPlan plan) {
+  MutantSample? _sample(ArgResults options) {
+    final raw = options['sample'] as String?;
+    if (raw == null) return null;
+    if (options['max-mutants'] != null) {
+      throw const _UsageError('--sample and --max-mutants cannot be '
+          'combined.');
+    }
+    final seedRaw = options['seed'] as String?;
+    final seed =
+        seedRaw == null ? Random().nextInt(1 << 32) : int.tryParse(seedRaw);
+    if (seed == null) {
+      throw _UsageError('--seed must be an integer, got "$seedRaw".');
+    }
+    try {
+      return MutantSample.parse(raw, seed: seed);
+    } on FormatException catch (e) {
+      throw _UsageError('--sample: ${e.message}.');
+    }
+  }
+
+  void _printPlan(MutationPlan plan, MutantSample? sample) {
     final ignored =
         plan.ignored == 0 ? '' : ', ${plan.ignored} ignored by pragma';
+    final sampled = sample == null
+        ? ''
+        : ' Sampled ${plan.mutants.length} of ${plan.sampledFrom} with '
+            '--seed ${sample.seed}.';
     stderr.writeln('${plan.found} mutants found, ${plan.mutants.length} '
         'to run (${plan.withoutTests} without tests importing their file'
-        '$ignored).');
+        '$ignored).$sampled');
     for (final file in plan.unparsed) {
       stderr.writeln('Skipped $file: it does not parse.');
     }

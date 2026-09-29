@@ -100,6 +100,14 @@ Mutants shall be ordered by the CRAP score of their enclosing method,
 descending (0 outside methods or without coverage), stable within equal
 scores. `--max-mutants N` keeps the first N.
 
+`--sample N` keeps N mutants chosen at random (all when fewer), `--sample
+P%` (0 < P ≤ 100) ⌈P% of them⌉, in the order above. The choice is a
+Fisher-Yates shuffle of the plan driven by `Random(seed)`, where the seed
+is `--seed` (an integer) or a random one; the plan summary on stderr
+states `Sampled <k> of <n> with --seed <seed>.` The same seed, plan and
+Dart SDK pick the same mutants. `--sample` with `--max-mutants`, a bad
+sample size or a non-integer seed is a usage error (exit 1).
+
 ## 7. Execution
 
 The test command is `flutter test --no-pub` when the pubspec's

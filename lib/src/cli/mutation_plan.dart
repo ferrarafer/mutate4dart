@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../mutation/mutant.dart';
 import '../mutation/mutant_finder.dart';
 import '../selection/mutant_filters.dart';
+import '../selection/mutant_sample.dart';
 import '../selection/test_selector.dart';
 
 /// Generated code is never mutated.
@@ -27,12 +28,13 @@ class MutationPlan {
     this.found,
     this.withoutTests,
     this.ignored,
-    this.unparsed,
-  );
+    this.unparsed, [
+    this.sampledFrom,
+  ]);
 
   /// Plans mutants for the Dart [files] (project-relative) of the project
   /// at [projectRoot]. [lcovPath] enables the coverage filter and CRAP
-  /// ordering; [maxMutants] keeps only the riskiest ones.
+  /// ordering. See [limited] to run fewer mutants.
   factory MutationPlan.build({
     required String projectRoot,
     required List<String> files,
@@ -41,7 +43,6 @@ class MutationPlan {
     required TestSelector selector,
     TestReach reach = TestReach.direct,
     String? lcovPath,
-    int? maxMutants,
   }) {
     final planned = <PlannedMutant>[];
     var found = 0;
@@ -80,13 +81,7 @@ class MutationPlan {
     }
     // Stable sort: riskiest methods first, source order within a method.
     final ordered = _stableSortByRisk(planned);
-    return MutationPlan._(
-      maxMutants == null ? ordered : ordered.take(maxMutants).toList(),
-      found,
-      withoutTests,
-      ignored,
-      unparsed,
-    );
+    return MutationPlan._(ordered, found, withoutTests, ignored, unparsed);
   }
 
   /// Mutants to run.
@@ -104,6 +99,23 @@ class MutationPlan {
 
   /// Files that could not be parsed.
   final List<String> unparsed;
+
+  /// With a sample, the number of mutants it was drawn from.
+  final int? sampledFrom;
+
+  /// This plan with only the [maxMutants] riskiest mutants, or a random
+  /// [sample] of them (still riskiest first).
+  MutationPlan limited({int? maxMutants, MutantSample? sample}) =>
+      MutationPlan._(
+        sample != null
+            ? sample.pick(mutants)
+            : mutants.take(maxMutants ?? mutants.length).toList(),
+        found,
+        withoutTests,
+        ignored,
+        unparsed,
+        sample == null ? null : mutants.length,
+      );
 
   /// The Dart files under [paths] (files or directories, relative to
   /// [projectRoot]), sorted, without generated code and without files

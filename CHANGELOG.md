@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0
+
+- `--sample N` / `--sample P%` runs a random subset of the planned
+  mutants (still riskiest first), for an unbiased score estimate on
+  large projects. `--seed S` repeats a sample; without it the seed is
+  random and printed in the plan summary. Cannot be combined with
+  `--max-mutants`.
+- `MutationPlan.build` no longer takes `maxMutants`; use
+  `MutationPlan.limited(maxMutants:, sample:)`.
+
 ## 0.10.0
 
 - `--format junit`: JUnit XML for CI test report views (GitLab, Jenkins,

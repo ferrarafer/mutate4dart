@@ -19,4 +19,5 @@ export 'src/run/parallel_runner.dart';
 export 'src/run/shadow_workspace.dart';
 export 'src/run/test_command.dart';
 export 'src/selection/mutant_filters.dart';
+export 'src/selection/mutant_sample.dart';
 export 'src/selection/test_selector.dart';

@@ -30,6 +30,17 @@ void main() {
         reason: 'only lib/other.dart is left');
   });
 
+  test('--sample runs a seeded random subset and prints the seed', () async {
+    final args = ['--dry-run', '--no-coverage', '--sample', '50%'];
+    final first = await runCli(root, [...args, '--seed', '7']);
+    expect(first.stderr, contains('Sampled 2 of 4 with --seed 7.'));
+    final again = await runCli(root, [...args, '--seed', '7']);
+    expect(again.stdout, first.stdout);
+    expect('\n'.allMatches(first.stdout), hasLength(2));
+    final random = await runCli(root, args);
+    expect(random.stderr, matches(RegExp(r'Sampled 2 of 4 with --seed \d+\.')));
+  });
+
   for (final jobs in ['1', '2']) {
     test('--min-timeout and --timeout-factor set the timeout (jobs $jobs)',
         () async {
